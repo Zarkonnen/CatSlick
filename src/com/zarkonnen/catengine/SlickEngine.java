@@ -1,18 +1,17 @@
 package com.zarkonnen.catengine;
 
-import com.zarkonnen.catengine.Game;
-import com.zarkonnen.catengine.Input;
 import com.zarkonnen.catengine.util.Clr;
 import com.zarkonnen.catengine.util.Pt;
 import com.zarkonnen.catengine.util.Rect;
 import com.zarkonnen.catengine.util.ScreenMode;
 import java.io.InputStream;
 import java.lang.ref.SoftReference;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import org.newdawn.slick.*;
 
-public class SlickEngine extends BasicGame implements Engine {
+public class SlickEngine extends BasicGame implements Engine, KeyListener {
 	public SlickEngine(String title, String loadBase, String soundLoadBase, Integer fps) {
 		super(title);
 		this.loadBase = loadBase;
@@ -28,6 +27,7 @@ public class SlickEngine extends BasicGame implements Engine {
 	Game g;
 	boolean fullscreen;
 	boolean cursorVisible = true;
+	String lastKeyPressed;
 	final HashMap<String, SoftReference<Image>> images = new HashMap<String, SoftReference<Image>>();
 	final HashMap<String, SoftReference<Music>> musics = new HashMap<String, SoftReference<Music>>();
 	final HashMap<String, ArrayList<SoftReference<Sound>>> sounds = new HashMap<String, ArrayList<SoftReference<Sound>>>();
@@ -169,6 +169,7 @@ public class SlickEngine extends BasicGame implements Engine {
 			sm.add(new ScreenMode(800, 600, false));
 			sm.add(new ScreenMode(640, 480, true));
 			sm.add(new ScreenMode(800, 600, true));
+			sm.add(new ScreenMode(1024, 768, true));
 			sm.add(new ScreenMode(gc.getScreenWidth(), gc.getScreenHeight(), true));
 			return sm;
 		}
@@ -193,7 +194,10 @@ public class SlickEngine extends BasicGame implements Engine {
 		@Override
 		public void play(String sound, double pitch, double volume, double x, double y) {
 			try {
-				getSound(sound).playAt((float) pitch, (float) volume, (float) x, (float) y, 0);
+				Sound s = getSound(sound);
+				if (s != null) {
+					s.playAt((float) pitch, (float) volume, (float) x, (float) y, 0);
+				}
 			} catch (SlickException e) {
 				e.printStackTrace();
 			}
@@ -220,8 +224,11 @@ public class SlickEngine extends BasicGame implements Engine {
 					return snd;
 				}
 			}
-			
-			Sound snd = new Sound(SlickEngine.class.getResource(soundLoadBase + sound));
+			URL url = SlickEngine.class.getResource(soundLoadBase + sound);
+			if (url == null) {
+				return null;
+			}
+			Sound snd = new Sound(url);
 			l.add(new SoftReference<Sound>(snd));
 			return snd;
 		}
@@ -281,6 +288,11 @@ public class SlickEngine extends BasicGame implements Engine {
 					currentMusic = null;
 				}
 			}
+		}
+
+		@Override
+		public String lastKeyPressed() {
+			return lastKeyPressed;
 		}
 	}
 
@@ -376,4 +388,16 @@ public class SlickEngine extends BasicGame implements Engine {
 		}
 	}
 
+	@Override
+	public void keyPressed(int i, char c) {
+		lastKeyPressed = org.newdawn.slick.Input.getKeyName(i);
+	}
+
+	@Override
+	public void keyReleased(int i, char c) {
+		String k = org.newdawn.slick.Input.getKeyName(i);
+		if (k.equals(lastKeyPressed)) {
+			lastKeyPressed = null;
+		}
+	}
 }
