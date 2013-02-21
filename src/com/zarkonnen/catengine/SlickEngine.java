@@ -332,26 +332,29 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener {
 		}
 
 		@Override
-		public Rect blit(String img, Clr tint, double x, double y, double width, double height, double angle) {
+		public Rect blit(String img, Clr tint, double x, double y, double width, double height, double angle, int srcX, int srcY, int srcWidth, int srcHeight, boolean flipped) {
 			Image image = getImage(img);
 			if (image == null) { return null; }
+			if (srcWidth == 0) { srcWidth = image.getWidth(); }
+			if (width == 0) { width = srcWidth; }
+			if (srcHeight == 0) { srcHeight = image.getHeight(); }
+			if (height == 0) { height = srcHeight; }
+			if (flipped) {
+				image = image.getFlippedCopy(true, false);
+				srcX = image.getWidth() - srcX - srcWidth;
+			}
 			g.translate((float) x, (float) y);
 			if (angle != 0) { g.rotate(0, 0, (float) (angle * 180 / Math.PI)); }
-			if (tint != null && tint.a != 255) {
-				if (width == 0 && height == 0) {
-					g.drawImage(image, 0, 0);
+			if (tint != null) {
+				Color c = new Color(tint.r, tint.g, tint.b, tint.a);
+				if (tint.a == 255) {
+					g.drawImage(image, 0f, 0f, (float) width, (float) height, srcX, srcY, srcX + srcWidth, srcY + srcHeight, c);
 				} else {
-					g.drawImage(image, 0f, 0f, (float) (width), (float) (height), 0f, 0f, image.getWidth(), image.getHeight());
+					g.drawImage(image, 0f, 0f, (float) width, (float) height, srcX, srcY, srcX + srcWidth, srcY + srcHeight, c);
+					g.drawImage(image, 0f, 0f, (float) width, (float) height, srcX, srcY, srcX + srcWidth, srcY + srcHeight);
 				}
-			}
-			if (width == 0 && height == 0) {
-				g.drawImage(image, 0, 0, tint == null ? null : new Color(tint.r, tint.g, tint.b, tint.a));
 			} else {
-				if (tint == null) {
-					g.drawImage(image, 0f, 0f, (float) (width), (float) (height), 0f, 0f, image.getWidth(), image.getHeight());
-				} else {
-					g.drawImage(image, 0f, 0f, (float) (width), (float) (height), 0f, 0f, image.getWidth(), image.getHeight(), new Color(tint.r, tint.g, tint.b, tint.a));
-				}
+				g.drawImage(image, 0f, 0f, (float) width, (float) height, srcX, srcY, srcX + srcWidth, srcY + srcHeight);
 			}
 			g.setColor(Color.white);
 			if (angle != 0) { g.rotate(0, 0, (float) - (angle * 180 / Math.PI)); }
@@ -370,19 +373,14 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener {
 		}
 		
 		private Image loadImage(String name) {
+			if (!name.contains(".")) {
+				name = name + ".png";
+			}
 			InputStream is = SlickEngine.class.getResourceAsStream(loadBase + name);
-			if (is == null) {
-				is = SlickEngine.class.getResourceAsStream(loadBase + name + ".png");
-			}
-			if (is == null) {
-				is = SlickEngine.class.getResourceAsStream(loadBase + name + ".jpg");
-			}
-			if (is == null) {
-				return null;
-			}
 			try {
 				return new Image(is, name, false);
-			} catch (SlickException e) {
+			} catch (Exception e) {
+				e.printStackTrace();
 				return null;
 			}
 		}
