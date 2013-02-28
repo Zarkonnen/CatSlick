@@ -9,6 +9,7 @@ import java.lang.ref.SoftReference;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import org.newdawn.slick.*;
 
 public class SlickEngine extends BasicGame implements Engine, KeyListener {
@@ -250,7 +251,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener {
 		}
 
 		@Override
-		public void playMusic(final String music, final double volume, final MusicDone callback) {
+		public void playMusic(final String music, final double volume, final MusicCallback startCallback, final MusicCallback doneCallback) {
 			new Thread("MusicStarter") {
 				@Override
 				public void run() {
@@ -259,11 +260,12 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener {
 							stopMusic();
 							currentMusic = getMusic(music);
 							currentMusic.play(1.0f, (float) volume);
+							if (startCallback != null) { startCallback.run(music, volume); }
 							currentMusic.addListener(new MusicListener() {
 								@Override
 								public void musicEnded(Music m) {
-									if (m == currentMusic && callback != null) {
-										callback.run(music, volume);
+									if (m == currentMusic && doneCallback != null) {
+										doneCallback.run(music, volume);
 									}
 								}
 
@@ -294,6 +296,50 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener {
 		public String lastKeyPressed() {
 			return lastKeyPressed;
 		}
+
+		@Override
+		public void preloadSounds(List<String> sound, final Runnable callback) {
+			final ArrayList<String> ss = new ArrayList<String>(sound);
+			Thread t = new Thread("Sound Preloader") {
+				@Override
+				public void run() {
+					for (String s : ss) {
+						try {
+							getSound(s);
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+					}
+					if (callback != null) {
+						callback.run();
+					}
+				}
+			};
+			t.setDaemon(true);
+			t.start();
+		}
+
+		@Override
+		public void preloadMusic(List<String> music, final Runnable callback) {
+			final ArrayList<String> ms = new ArrayList<String>(music);
+			Thread t = new Thread("Music Preloader") {
+				@Override
+				public void run() {
+					for (String m : ms) {
+						try {
+							getMusic(m);
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+					}
+					if (callback != null) {
+						callback.run();
+					}
+				}
+			};
+			t.setDaemon(true);
+			t.start();
+		}
 	}
 
 	private class MyFrame implements Frame {
@@ -316,8 +362,15 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener {
 		}
 
 		@Override
-		public Rect rect(Clr c, double x, double y, double width, double height, double angle) {
-			g.setColor(new Color(c.r, c.g, c.b, c.a));
+		public Rect rect(Clr tint, double x, double y, double width, double height, double angle) {
+			if (angle == 0 && (x + width <= 0 || y + height <= 0 || x > gc.getWidth() || y > gc.getHeight())) {
+				return new Rect(x, y, width, height);
+			}
+			if (tint.machineColorCache == null) {
+				tint.machineColorCache = new Color(tint.r, tint.g, tint.b, tint.a);
+			}
+			Color c = (Color) tint.machineColorCache;
+			g.setColor(c);
 			if (angle == 0) {
 				g.fillRect((float) x, (float) y, (float) width, (float) height);
 			} else {
@@ -339,6 +392,9 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener {
 			if (width == 0) { width = srcWidth; }
 			if (srcHeight == 0) { srcHeight = image.getHeight(); }
 			if (height == 0) { height = srcHeight; }
+			if (angle == 0 && (x + width <= 0 || y + height <= 0 || x > gc.getWidth() || y > gc.getHeight())) {
+				return new Rect(x, y, width == 0 ? image.getWidth() : width, height == 0 ? image.getHeight() : height);
+			}
 			if (flipped) {
 				image = image.getFlippedCopy(true, false);
 				srcX = image.getWidth() - srcX - srcWidth;
@@ -346,7 +402,10 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener {
 			g.translate((float) x, (float) y);
 			if (angle != 0) { g.rotate(0, 0, (float) (angle * 180 / Math.PI)); }
 			if (tint != null) {
-				Color c = new Color(tint.r, tint.g, tint.b, tint.a);
+				if (tint.machineColorCache == null) {
+					tint.machineColorCache = new Color(tint.r, tint.g, tint.b, tint.a);
+				}
+				Color c = (Color) tint.machineColorCache;
 				if (tint.a == 255) {
 					g.drawImage(image, 0f, 0f, (float) width, (float) height, srcX, srcY, srcX + srcWidth, srcY + srcHeight, c);
 				} else {
