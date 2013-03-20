@@ -346,10 +346,20 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener {
 		private MyFrame(GameContainer gc, Graphics grphcs) {
 			this.gc = gc;
 			this.g = grphcs;
+			gcW = gc.getWidth();
+			gcH = gc.getHeight();
 		}
 		
-		GameContainer gc;
-		Graphics g;
+		boolean wasRecting = false;
+		final int gcW;
+		final int gcH;
+		final GameContainer gc;
+		final Graphics g;
+		
+		@Override
+		public Object nativeRenderer() {
+			return g;
+		}
 		
 		@Override
 		public int fps() {
@@ -363,7 +373,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener {
 
 		@Override
 		public Rect rect(Clr tint, double x, double y, double width, double height, double angle) {
-			if (angle == 0 && (x + width <= 0 || y + height <= 0 || x > gc.getWidth() || y > gc.getHeight())) {
+			if (angle == 0 && (x + width <= 0 || y + height <= 0 || x > gcW || y > gcH)) {
 				return new Rect(x, y, width, height);
 			}
 			if (tint.machineColorCache == null) {
@@ -380,7 +390,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener {
 				g.rotate(0, 0, (float) - (angle * 180 / Math.PI));
 				g.translate((float) -x, (float) -y);
 			}
-			g.setColor(Color.white);
+			wasRecting = true;
 			return new Rect(x, y, width, height);
 		}
 
@@ -392,7 +402,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener {
 			if (width == 0) { width = srcWidth; }
 			if (srcHeight == 0) { srcHeight = image.getHeight(); }
 			if (height == 0) { height = srcHeight; }
-			if (angle == 0 && (x + width <= 0 || y + height <= 0 || x > gc.getWidth() || y > gc.getHeight())) {
+			if (angle == 0 && (x + width <= 0 || y + height <= 0 || x > gcW || y > gcH)) {
 				return new Rect(x, y, width == 0 ? image.getWidth() : width, height == 0 ? image.getHeight() : height);
 			}
 			if (flipped) {
@@ -412,7 +422,12 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener {
 					g.drawImage(image, 0f, 0f, (float) width, (float) height, srcX, srcY, srcX + srcWidth, srcY + srcHeight, c);
 					g.drawImage(image, 0f, 0f, (float) width, (float) height, srcX, srcY, srcX + srcWidth, srcY + srcHeight);
 				}
+				wasRecting = false;
 			} else {
+				if (wasRecting) {
+					g.setColor(Color.white);
+					wasRecting = false;
+				}
 				g.drawImage(image, 0f, 0f, (float) width, (float) height, srcX, srcY, srcX + srcWidth, srcY + srcHeight);
 			}
 			g.setColor(Color.white);
