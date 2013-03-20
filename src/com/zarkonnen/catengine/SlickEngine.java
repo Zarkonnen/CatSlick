@@ -10,9 +10,11 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import org.lwjgl.opengl.Display;
+import org.lwjgl.opengl.DisplayMode;
 import org.newdawn.slick.*;
 
-public class SlickEngine extends BasicGame implements Engine, KeyListener {
+public class SlickEngine extends BasicGame implements Engine, KeyListener, ExceptionHandler {
 	public SlickEngine(String title, String loadBase, String soundLoadBase, Integer fps) {
 		super(title);
 		this.loadBase = loadBase;
@@ -32,6 +34,17 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener {
 	final HashMap<String, SoftReference<Image>> images = new HashMap<String, SoftReference<Image>>();
 	final HashMap<String, SoftReference<Music>> musics = new HashMap<String, SoftReference<Music>>();
 	final HashMap<String, ArrayList<SoftReference<Sound>>> sounds = new HashMap<String, ArrayList<SoftReference<Sound>>>();
+	ExceptionHandler eh = this;
+	
+	@Override
+	public void handle(Exception e, boolean fatal) {
+		e.printStackTrace();
+	}
+	
+	@Override
+	public void setExceptionHandler(ExceptionHandler eh) {
+		this.eh = eh;
+	}
 	
 	@Override
 	public void init(GameContainer gc) throws SlickException {
@@ -41,8 +54,8 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener {
 	}
 
 	@Override
-	public void update(GameContainer gc, int i) throws SlickException {
-		g.input(new MyInput(gc));
+	public void update(GameContainer gc, int delta) throws SlickException {
+		g.input(new MyInput(gc, delta));
 	}
 
 	@Override
@@ -57,7 +70,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener {
 			agc = new MyAppGameContainer(this);
 			agc.setDisplayMode(800, 600, false);
 		} catch (Exception e) {
-			e.printStackTrace();
+			eh.handle(e, true);
 		}	
 	}
 	
@@ -85,7 +98,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener {
 		try {
 			agc.runUntil(u);
 		} catch (SlickException e) {
-			e.printStackTrace();
+			eh.handle(e, true);
 			agc.destroy();
 			System.exit(1);
 		}
@@ -98,8 +111,11 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener {
 	
 	private class MyInput implements com.zarkonnen.catengine.Input {
 		GameContainer gc;
-		public MyInput(GameContainer gc) {
+		int delta;
+		
+		public MyInput(GameContainer gc, int delta) {
 			this.gc = gc;
+			this.delta = delta;
 		}
 
 		@Override
@@ -135,6 +151,16 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener {
 			}
 			return null;
 		}
+		
+		@Override
+		public Pt clicked() {
+			for (int i = 3; i >= 0; i--) {
+				if (gc.getInput().isMousePressed(i)) {
+					return cursor();
+				}
+			}
+			return null;
+		}
 
 		@Override
 		public int clickButton() {
@@ -150,6 +176,9 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener {
 		public ScreenMode mode() {
 			return new ScreenMode(gc.getWidth(), gc.getHeight(), fullscreen);
 		}
+		
+		@Override
+		public int msDelta() { return delta; }
 
 		@Override
 		public Input setMode(ScreenMode mode) {
@@ -159,19 +188,22 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener {
 				fullscreen = mode.fullscreen;
 				setCursorVisible(cursorVisible);
 			} catch (Exception e) {
-				e.printStackTrace();
+				eh.handle(e, false);
 			}
 			return this;
 		}
 
 		@Override
 		public ArrayList<ScreenMode> modes() {
-			ArrayList<ScreenMode> sm =  new ArrayList<ScreenMode>();
-			sm.add(new ScreenMode(800, 600, false));
-			sm.add(new ScreenMode(640, 480, true));
-			sm.add(new ScreenMode(800, 600, true));
-			sm.add(new ScreenMode(1024, 768, true));
-			sm.add(new ScreenMode(gc.getScreenWidth(), gc.getScreenHeight(), true));
+			ArrayList<ScreenMode> sm = new ArrayList<ScreenMode>();
+			try {
+				for (DisplayMode dm : Display.getAvailableDisplayModes()) {
+					sm.add(new ScreenMode(dm.getWidth(), dm.getHeight(), dm.isFullscreenCapable()));
+				}
+			} catch (Exception e) {
+				eh.handle(e, false);
+				sm.add(new ScreenMode(800, 600, false));
+			}
 			return sm;
 		}
 
@@ -191,6 +223,13 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener {
 			gc.setMouseGrabbed(!visible);
 			return this;
 		}
+		
+		@Override
+		public void preload(List<Img> l) {
+			for (Img img : l) {
+				getImage(img);
+			}
+		}
 
 		@Override
 		public void play(String sound, double pitch, double volume, double x, double y) {
@@ -200,7 +239,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener {
 					s.playAt((float) pitch, (float) volume, (float) x, (float) y, 0);
 				}
 			} catch (SlickException e) {
-				e.printStackTrace();
+				eh.handle(e, false);
 			}
 		}
 		
@@ -276,7 +315,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener {
 							});
 						}
 					} catch (SlickException e) {
-						e.printStackTrace();
+						eh.handle(e, false);
 					}
 				}
 			}.start();
@@ -296,50 +335,6 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener {
 		public String lastKeyPressed() {
 			return lastKeyPressed;
 		}
-
-		@Override
-		public void preloadSounds(List<String> sound, final Runnable callback) {
-			final ArrayList<String> ss = new ArrayList<String>(sound);
-			Thread t = new Thread("Sound Preloader") {
-				@Override
-				public void run() {
-					for (String s : ss) {
-						try {
-							getSound(s);
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
-					}
-					if (callback != null) {
-						callback.run();
-					}
-				}
-			};
-			t.setDaemon(true);
-			t.start();
-		}
-
-		@Override
-		public void preloadMusic(List<String> music, final Runnable callback) {
-			final ArrayList<String> ms = new ArrayList<String>(music);
-			Thread t = new Thread("Music Preloader") {
-				@Override
-				public void run() {
-					for (String m : ms) {
-						try {
-							getMusic(m);
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
-					}
-					if (callback != null) {
-						callback.run();
-					}
-				}
-			};
-			t.setDaemon(true);
-			t.start();
-		}
 	}
 
 	private class MyFrame implements Frame {
@@ -350,7 +345,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener {
 			gcH = gc.getHeight();
 		}
 		
-		boolean wasRecting = false;
+		boolean colorNotWhite;
 		final int gcW;
 		final int gcH;
 		final GameContainer gc;
@@ -372,91 +367,116 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener {
 		}
 
 		@Override
-		public Rect rect(Clr tint, double x, double y, double width, double height, double angle) {
+		public void rect(Clr tint, double x, double y, double width, double height, double angle) {
 			if (angle == 0 && (x + width <= 0 || y + height <= 0 || x > gcW || y > gcH)) {
-				return new Rect(x, y, width, height);
+				return;
 			}
 			if (tint.machineColorCache == null) {
 				tint.machineColorCache = new Color(tint.r, tint.g, tint.b, tint.a);
 			}
 			Color c = (Color) tint.machineColorCache;
 			g.setColor(c);
+			colorNotWhite = true;
 			if (angle == 0) {
 				g.fillRect((float) x, (float) y, (float) width, (float) height);
 			} else {
-				g.translate((float) x, (float) y);
+				g.translate((float) (x + width / 2), (float) (y + height / 2));
 				g.rotate(0, 0, (float)  (angle * 180 / Math.PI));
+				g.translate(-(float) (width / 2), -(float) (height / 2));
 				g.fillRect(0, 0, (float) width, (float) height);
-				g.rotate(0, 0, (float) - (angle * 180 / Math.PI));
-				g.translate((float) -x, (float) -y);
+				g.translate((float) (width / 2), (float) (height / 2));
+				g.rotate(0, 0, -(float)(angle * 180 / Math.PI));
+				g.translate(-(float) (x + width / 2), -(float) (y + height / 2));
 			}
-			wasRecting = true;
-			return new Rect(x, y, width, height);
 		}
 
 		@Override
-		public Rect blit(String img, Clr tint, double x, double y, double width, double height, double angle, int srcX, int srcY, int srcWidth, int srcHeight, boolean flipped) {
-			Image image = getImage(img);
-			if (image == null) { return null; }
-			if (srcWidth == 0) { srcWidth = image.getWidth(); }
-			if (width == 0) { width = srcWidth; }
-			if (srcHeight == 0) { srcHeight = image.getHeight(); }
-			if (height == 0) { height = srcHeight; }
+		public void blit(Img img, Clr tint, double alpha, double x, double y, double width, double height, double angle) {
+			if (img == null) { return; }
+			if (img.machineImgCache == null) {
+				getImage(img);
+			}
+			Image image = (Image) img.machineImgCache;
+			if (image == null) { return; }
+			width = width == 0 ? img.machineWCache : width;
+			height = height == 0 ? img.machineHCache : height;
+			
 			if (angle == 0 && (x + width <= 0 || y + height <= 0 || x > gcW || y > gcH)) {
-				return new Rect(x, y, width == 0 ? image.getWidth() : width, height == 0 ? image.getHeight() : height);
+				return;
 			}
-			if (flipped) {
-				image = image.getFlippedCopy(true, false);
-				srcX = image.getWidth() - srcX - srcWidth;
-			}
-			g.translate((float) x, (float) y);
-			if (angle != 0) { g.rotate(0, 0, (float) (angle * 180 / Math.PI)); }
-			if (tint != null) {
+			
+			image.setRotation((float) angle);
+			
+			if (tint == null) {
+				if (colorNotWhite) {
+					g.setColor(Color.white);
+					colorNotWhite = false;
+				}
+				image.setAlpha((float) alpha);
+				image.draw((float) x, (float) y, (float) (width), (float) (height));
+			} else {
 				if (tint.machineColorCache == null) {
-					tint.machineColorCache = new Color(tint.r, tint.g, tint.b, tint.a);
+					tint.machineColorCache = new Color(tint.r, tint.g, tint.b);
 				}
 				Color c = (Color) tint.machineColorCache;
 				if (tint.a == 255) {
-					g.drawImage(image, 0f, 0f, (float) width, (float) height, srcX, srcY, srcX + srcWidth, srcY + srcHeight, c);
+					image.setAlpha((float) alpha);
+					image.draw((float) x, (float) y, (float) (width), (float) (height), c);
 				} else {
-					g.drawImage(image, 0f, 0f, (float) width, (float) height, srcX, srcY, srcX + srcWidth, srcY + srcHeight, c);
-					g.drawImage(image, 0f, 0f, (float) width, (float) height, srcX, srcY, srcX + srcWidth, srcY + srcHeight);
+					if (alpha == 1) {
+						image.setAlpha(1);
+						image.draw((float) x, (float) y, (float) (width), (float) (height));
+						image.setAlpha(tint.a / 255.0f);
+						image.draw((float) x, (float) y, (float) (width), (float) (height), c);
+					} else {
+						image.setAlpha((float) (alpha * (255 - tint.a) / 255.0));
+						image.draw((float) x, (float) y, (float) (width), (float) (height));
+						image.setAlpha((float) (alpha * tint.a / 255.0));
+						image.draw((float) x, (float) y, (float) (width), (float) (height), c);
+					}
 				}
-				wasRecting = false;
-			} else {
-				if (wasRecting) {
-					g.setColor(Color.white);
-					wasRecting = false;
-				}
-				g.drawImage(image, 0f, 0f, (float) width, (float) height, srcX, srcY, srcX + srcWidth, srcY + srcHeight);
 			}
-			g.setColor(Color.white);
-			if (angle != 0) { g.rotate(0, 0, (float) - (angle * 180 / Math.PI)); }
-			g.translate((float) -x, (float) -y);
-			return new Rect(x, y, width == 0 ? image.getWidth() : width, height == 0 ? image.getHeight() : height);
 		}
+	}
+	
+	private void getImage(Img img) {
+		Image image = null;
+		if (images.containsKey(img.key)) {
+			image = images.get(img.key).get();
+		}
+		if (image == null && img.flipped && images.containsKey(img.src)) {
+			image = images.get(img.src).get();
+			image = image.getFlippedCopy(true, false);
+			images.put(img.key, new SoftReference<Image>(image));
+		}
+		if (image == null) {
+			image = loadImage(img.src);
+			images.put(img.src, new SoftReference<Image>(image));
+			if (img.flipped) {
+				image = image.getFlippedCopy(true, false);
+				images.put(img.key, new SoftReference<Image>(image));
+			}
+		}
+		if (image == null) { return; }
+		if (img.srcWidth != 0 && img.srcHeight != 0) {
+			image = image.getSubImage(img.srcX, img.srcY, img.srcWidth, img.srcHeight);
+		}
+		image.setCenterOfRotation(image.getWidth() / 2.0f, image.getHeight() / 2.0f);
+		img.machineImgCache = image;
+		img.machineWCache = image.getWidth();
+		img.machineHCache = image.getHeight();
+	}
 
-		private Image getImage(String name) {
-			if (images.containsKey(name)) {
-				Image img = images.get(name).get();
-				if (img != null) { return img; }
-			}
-			Image img = loadImage(name);
-			images.put(name, new SoftReference<Image>(img));
-			return img;
+	private Image loadImage(String name) {
+		if (!name.contains(".")) {
+			name = name + ".png";
 		}
-		
-		private Image loadImage(String name) {
-			if (!name.contains(".")) {
-				name = name + ".png";
-			}
-			InputStream is = SlickEngine.class.getResourceAsStream(loadBase + name);
-			try {
-				return new Image(is, name, false);
-			} catch (Exception e) {
-				e.printStackTrace();
-				return null;
-			}
+		InputStream is = SlickEngine.class.getResourceAsStream(loadBase + name);
+		try {
+			return new Image(is, name, false);
+		} catch (Exception e) {
+			eh.handle(e, false);
+			return null;
 		}
 	}
 
