@@ -437,6 +437,26 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 				}
 			}
 		}
+
+		@Override
+		public void shift(double dx, double dy) {
+			g.translate((float) dx, (float) dy);
+		}
+
+		@Override
+		public void scale(double xScale, double yScale) {
+			g.scale((float) xScale, (float) yScale);
+		}
+
+		@Override
+		public void rotate(double angle) {
+			g.rotate(0, 0, (float) angle);
+		}
+
+		@Override
+		public void resetTransforms() {
+			g.resetTransform();
+		}
 	}
 	
 	private void getImage(Img img) {
