@@ -56,6 +56,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 	@Override
 	public void update(GameContainer gc, int delta) throws SlickException {
 		g.input(new MyInput(gc, delta));
+		gc.getInput().clearKeyPressedRecord();
 	}
 
 	@Override
@@ -368,9 +369,6 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 
 		@Override
 		public void rect(Clr tint, double x, double y, double width, double height, double angle) {
-			if (angle == 0 && (x + width <= 0 || y + height <= 0 || x > gcW || y > gcH)) {
-				return;
-			}
 			if (tint.machineColorCache == null) {
 				tint.machineColorCache = new Color(tint.r, tint.g, tint.b, tint.a);
 			}
@@ -380,13 +378,9 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 			if (angle == 0) {
 				g.fillRect((float) x, (float) y, (float) width, (float) height);
 			} else {
-				g.translate((float) (x + width / 2), (float) (y + height / 2));
-				g.rotate(0, 0, (float)  (angle * 180 / Math.PI));
-				g.translate(-(float) (width / 2), -(float) (height / 2));
-				g.fillRect(0, 0, (float) width, (float) height);
-				g.translate((float) (width / 2), (float) (height / 2));
-				g.rotate(0, 0, -(float)(angle * 180 / Math.PI));
-				g.translate(-(float) (x + width / 2), -(float) (y + height / 2));
+				g.rotate((float) (x + width / 2), (float) (y + height / 2), (float) (angle * 180 / Math.PI));
+				g.fillRect((float) x, (float) y, (float) width, (float) height);
+				g.rotate((float) (x + width / 2), (float) (y + height / 2), -(float) (angle * 180 / Math.PI));
 			}
 		}
 
@@ -401,11 +395,11 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 			width = width == 0 ? img.machineWCache : width;
 			height = height == 0 ? img.machineHCache : height;
 			
-			if (angle == 0 && (x + width <= 0 || y + height <= 0 || x > gcW || y > gcH)) {
+			/*if (angle == 0 && (x + width <= 0 || y + height <= 0 || x > gcW || y > gcH)) {
 				return;
-			}
+			}*/
 			
-			image.setRotation((float) angle);
+			image.setRotation((float) (angle * 180 / Math.PI));
 			
 			if (tint == null) {
 				if (colorNotWhite) {
@@ -479,7 +473,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		}
 		if (image == null) { return; }
 		if (img.srcWidth != 0 && img.srcHeight != 0) {
-			image = image.getSubImage(img.srcX, img.srcY, img.srcWidth, img.srcHeight);
+			image = image.getSubImage(img.flipped ? (image.getWidth() - img.srcX - img.srcWidth) : img.srcX, img.srcY, img.srcWidth, img.srcHeight);
 		}
 		image.setCenterOfRotation(image.getWidth() / 2.0f, image.getHeight() / 2.0f);
 		img.machineImgCache = image;
