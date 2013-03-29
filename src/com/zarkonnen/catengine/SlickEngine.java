@@ -231,6 +231,15 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 				getImage(img);
 			}
 		}
+		
+		@Override
+		public void preloadSounds(List<String> l) {
+			for (String snd : l) {
+				try { getSound(snd); } catch (SlickException e) {
+					eh.handle(e, false);
+				}
+			}
+		}
 
 		@Override
 		public void play(String sound, double pitch, double volume, double x, double y) {
