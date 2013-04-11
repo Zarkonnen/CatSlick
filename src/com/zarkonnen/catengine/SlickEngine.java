@@ -34,6 +34,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 	final HashMap<String, SoftReference<Image>> images = new HashMap<String, SoftReference<Image>>();
 	final HashMap<String, SoftReference<Music>> musics = new HashMap<String, SoftReference<Music>>();
 	final HashMap<String, ArrayList<SoftReference<Sound>>> sounds = new HashMap<String, ArrayList<SoftReference<Sound>>>();
+	final Object soundLoadMutex = new Object();
 	ExceptionHandler eh = this;
 	
 	@Override
@@ -234,57 +235,63 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		
 		@Override
 		public void preloadSounds(List<String> l) {
-			for (String snd : l) {
-				try { getSound(snd); } catch (SlickException e) {
-					eh.handle(e, false);
+			synchronized (soundLoadMutex) {
+				for (String snd : l) {
+					try { getSound(snd); } catch (SlickException e) {
+						eh.handle(e, false);
+					}
 				}
 			}
 		}
 
 		@Override
 		public void play(String sound, double pitch, double volume, double x, double y) {
-			try {
-				Sound s = getSound(sound);
-				if (s != null) {
-					s.playAt((float) pitch, (float) volume, (float) x, (float) y, 0);
+			synchronized (soundLoadMutex) {
+				try {
+					Sound s = getSound(sound);
+					if (s != null) {
+						s.playAt((float) pitch, (float) volume, (float) x, (float) y, 0);
+					}
+				} catch (SlickException e) {
+					eh.handle(e, false);
 				}
-			} catch (SlickException e) {
-				eh.handle(e, false);
 			}
 		}
 		
 		private Sound getSound(String sound) throws SlickException {
-			if (!sound.contains(".")) { sound += ".ogg"; }
-			if (!sounds.containsKey(sound)) {
-				sounds.put(sound, new ArrayList<SoftReference<Sound>>());
-			}
-			ArrayList<SoftReference<Sound>> l = sounds.get(sound);
-			for (SoftReference<Sound> entry : l) {
-				Sound snd = entry.get();
-				if (snd != null && !snd.playing()) {
-					return snd;
+			synchronized (soundLoadMutex) {
+				if (!sound.contains(".")) { sound += ".ogg"; }
+				if (!sounds.containsKey(sound)) {
+					sounds.put(sound, new ArrayList<SoftReference<Sound>>());
 				}
-			}
-			
-			for (int i = 0; i < l.size(); i++) {
-				Sound snd = l.get(i).get();
-				if (snd == null) {
-					snd = new Sound(SlickEngine.class.getResource(soundLoadBase + sound));
-					l.set(i, new SoftReference<Sound>(snd));
-					return snd;
+				ArrayList<SoftReference<Sound>> l = sounds.get(sound);
+				for (SoftReference<Sound> entry : l) {
+					Sound snd = entry.get();
+					if (snd != null && !snd.playing()) {
+						return snd;
+					}
 				}
+
+				for (int i = 0; i < l.size(); i++) {
+					Sound snd = l.get(i).get();
+					if (snd == null) {
+						snd = new Sound(SlickEngine.class.getResource(soundLoadBase + sound));
+						l.set(i, new SoftReference<Sound>(snd));
+						return snd;
+					}
+				}
+				URL url = SlickEngine.class.getResource(soundLoadBase + sound);
+				if (url == null) {
+					return null;
+				}
+				Sound snd = new Sound(url);
+				l.add(new SoftReference<Sound>(snd));
+				return snd;
 			}
-			URL url = SlickEngine.class.getResource(soundLoadBase + sound);
-			if (url == null) {
-				return null;
-			}
-			Sound snd = new Sound(url);
-			l.add(new SoftReference<Sound>(snd));
-			return snd;
 		}
 		
 		private Music getMusic(String music) throws SlickException {
-			synchronized (musics) {
+			synchronized (soundLoadMutex) {
 				if (!music.contains(".")) { music += ".ogg"; }
 				if (musics.containsKey(music)) {
 					SoftReference<Music> sr = musics.get(music);
@@ -305,7 +312,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 				@Override
 				public void run() {
 					try {
-						synchronized (musics) {
+						synchronized (soundLoadMutex) {
 							stopMusic();
 							currentMusic = getMusic(music);
 							currentMusic.play(1.0f, (float) volume);
@@ -324,8 +331,8 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 								}
 							});
 						}
-					} catch (SlickException e) {
-						eh.handle(e, false);
+					} catch (Exception e) {
+						eh.handle(new RuntimeException("Could not play " + music, e), false);
 					}
 				}
 			}.start();
@@ -333,7 +340,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 
 		@Override
 		public void stopMusic() {
-			synchronized (musics) {
+			synchronized (soundLoadMutex) {
 				if (currentMusic != null && currentMusic.playing()) {
 					currentMusic.stop();
 					currentMusic = null;
