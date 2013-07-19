@@ -36,6 +36,12 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 	final HashMap<String, ArrayList<SoftReference<Sound>>> sounds = new HashMap<String, ArrayList<SoftReference<Sound>>>();
 	final Object soundLoadMutex = new Object();
 	ExceptionHandler eh = this;
+	int mouseWheelMovement = 0;
+	
+	@Override
+	public void mouseWheelMoved(int i) {
+		mouseWheelMovement += i;
+	}
 	
 	@Override
 	public void handle(Exception e, boolean fatal) {
@@ -58,6 +64,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 	public void update(GameContainer gc, int delta) throws SlickException {
 		g.input(new MyInput(gc, delta));
 		gc.getInput().clearKeyPressedRecord();
+		mouseWheelMovement = 0;
 	}
 
 	@Override
@@ -352,6 +359,11 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		public String lastKeyPressed() {
 			return lastKeyPressed;
 		}
+
+		@Override
+		public int scrollAmount() {
+			return mouseWheelMovement;
+		}
 	}
 
 	private class MyFrame implements Frame {
@@ -466,6 +478,26 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		@Override
 		public void resetTransforms() {
 			g.resetTransform();
+		}
+
+		@Override
+		public double getWidth(Img img) {
+			if (img == null) { return 0; }
+			if (img.srcWidth != 0) { return img.srcWidth; }
+			if (img.machineImgCache == null) {
+				getImage(img);
+			}
+			return img.machineWCache;
+		}
+
+		@Override
+		public double getHeight(Img img) {
+			if (img == null) { return 0; }
+			if (img.srcHeight != 0) { return img.srcHeight; }
+			if (img.machineImgCache == null) {
+				getImage(img);
+			}
+			return img.machineHCache;
 		}
 	}
 	
