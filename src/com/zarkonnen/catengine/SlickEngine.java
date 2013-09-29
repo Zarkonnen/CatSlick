@@ -22,6 +22,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		this.fps = fps;
 	}
 	
+	boolean doExit = false;
 	int fps;
 	Music currentMusic;
 	String loadBase;
@@ -96,7 +97,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 				gameLoop();
 			}
 
-			if (forceExit) {
+			if (doExit) {
 				System.exit(0);
 			}
 		}
@@ -152,7 +153,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		}
 
 		@Override
-		public Pt click() {
+		public Pt mouseDown() {
 			for (int i = 3; i >= 0; i--) {
 				if (gc.getInput().isMouseButtonDown(i)) {
 					return cursor();
