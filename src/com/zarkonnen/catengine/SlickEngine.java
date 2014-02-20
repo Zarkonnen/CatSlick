@@ -2,7 +2,6 @@ package com.zarkonnen.catengine;
 
 import com.zarkonnen.catengine.util.Clr;
 import com.zarkonnen.catengine.util.Pt;
-import com.zarkonnen.catengine.util.Rect;
 import com.zarkonnen.catengine.util.ScreenMode;
 import java.io.InputStream;
 import java.lang.ref.SoftReference;
@@ -38,6 +37,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 	final Object soundLoadMutex = new Object();
 	ExceptionHandler eh = this;
 	int mouseWheelMovement = 0;
+	char lastChar = 0;
 	
 	@Override
 	public void mouseWheelMoved(int i) {
@@ -145,6 +145,10 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 			} catch (Exception e) {
 				return false;
 			}
+		}
+		
+		public char getTypedChar() {
+			return 'x';
 		}
 
 		@Override
@@ -365,6 +369,11 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		public int scrollAmount() {
 			return mouseWheelMovement;
 		}
+
+		@Override
+		public char lastInput() {
+			return lastChar;
+		}
 	}
 
 	private class MyFrame implements Frame {
@@ -546,6 +555,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 	@Override
 	public void keyPressed(int i, char c) {
 		lastKeyPressed = org.newdawn.slick.Input.getKeyName(i);
+		lastChar = c;
 	}
 
 	@Override
@@ -553,6 +563,9 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		String k = org.newdawn.slick.Input.getKeyName(i);
 		if (k.equals(lastKeyPressed)) {
 			lastKeyPressed = null;
+		}
+		if (c == lastChar) {
+			lastChar = 0;
 		}
 	}
 }
