@@ -33,7 +33,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 	String lastKeyPressed;
 	final HashMap<String, SoftReference<Image>> images = new HashMap<String, SoftReference<Image>>();
 	final HashMap<String, SoftReference<Music>> musics = new HashMap<String, SoftReference<Music>>();
-	final HashMap<String, ArrayList<SoftReference<Sound>>> sounds = new HashMap<String, ArrayList<SoftReference<Sound>>>();
+	final HashMap<String, SoftReference<Sound>> sounds = new HashMap<String, SoftReference<Sound>>();
 	final Object soundLoadMutex = new Object();
 	ExceptionHandler eh = this;
 	int mouseWheelMovement = 0;
@@ -273,31 +273,16 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		private Sound getSound(String sound) throws SlickException {
 			synchronized (soundLoadMutex) {
 				if (!sound.contains(".")) { sound += ".ogg"; }
-				if (!sounds.containsKey(sound)) {
-					sounds.put(sound, new ArrayList<SoftReference<Sound>>());
-				}
-				ArrayList<SoftReference<Sound>> l = sounds.get(sound);
-				for (SoftReference<Sound> entry : l) {
-					Sound snd = entry.get();
-					if (snd != null && !snd.playing()) {
+				SoftReference<Sound> ref = sounds.get(sound);
+				if (ref != null) {
+					Sound snd = ref.get();
+					if (snd != null) {
 						return snd;
 					}
 				}
 
-				for (int i = 0; i < l.size(); i++) {
-					Sound snd = l.get(i).get();
-					if (snd == null) {
-						snd = new Sound(SlickEngine.class.getResource(soundLoadBase + sound));
-						l.set(i, new SoftReference<Sound>(snd));
-						return snd;
-					}
-				}
-				URL url = SlickEngine.class.getResource(soundLoadBase + sound);
-				if (url == null) {
-					return null;
-				}
-				Sound snd = new Sound(url);
-				l.add(new SoftReference<Sound>(snd));
+				Sound snd = new Sound(SlickEngine.class.getResource(soundLoadBase + sound));
+				sounds.put(sound, new SoftReference<Sound>(snd));
 				return snd;
 			}
 		}
