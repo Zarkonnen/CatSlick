@@ -495,6 +495,11 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 			}
 			return img.machineHCache;
 		}
+
+		@Override
+		public Pt cursor() {
+			return new Pt(gc.getInput().getMouseX(), gc.getInput().getMouseY());
+		}
 	}
 	
 	private void getImage(Img img) {
