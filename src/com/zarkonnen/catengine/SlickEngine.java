@@ -12,6 +12,9 @@ import java.util.List;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
 import org.newdawn.slick.*;
+import org.newdawn.slick.opengl.TextureImpl;
+import org.newdawn.slick.opengl.renderer.Renderer;
+import org.newdawn.slick.opengl.renderer.SGL;
 
 public class SlickEngine extends BasicGame implements Engine, KeyListener, ExceptionHandler {
 	public SlickEngine(String title, String loadBase, String soundLoadBase, Integer fps) {
@@ -21,6 +24,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		this.fps = fps;
 	}
 	
+	protected static SGL GL = Renderer.get();
 	boolean doExit = false;
 	int fps;
 	Music currentMusic;
@@ -397,13 +401,32 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 				tint.machineColorCache = new Color(tint.r, tint.g, tint.b, tint.a);
 			}
 			Color c = (Color) tint.machineColorCache;
-			g.setColor(c);
-			colorNotWhite = true;
+			//g.setColor(c);
+			Graphics.setCurrent(g);
+			TextureImpl.bindNone();
+			c.bind();
+			//colorNotWhite = true;
+			float x1 = (float) x;
+			float y1 = (float) y;
+			float w = (float) width;
+			float h = (float) height;
 			if (angle == 0) {
-				g.fillRect((float) x, (float) y, (float) width, (float) height);
+				GL.glBegin(SGL.GL_QUADS);
+				GL.glVertex2f(x1, y1);
+				GL.glVertex2f(x1 + w, y1);
+				GL.glVertex2f(x1 + w, y1 + h);
+				GL.glVertex2f(x1, y1 + h);
+				GL.glEnd();
+				//g.fillRect((float) x, (float) y, (float) width, (float) height);
 			} else {
 				g.rotate((float) (x + width / 2), (float) (y + height / 2), (float) (angle * 180 / Math.PI));
-				g.fillRect((float) x, (float) y, (float) width, (float) height);
+				GL.glBegin(SGL.GL_QUADS);
+				GL.glVertex2f(x1, y1);
+				GL.glVertex2f(x1 + w, y1);
+				GL.glVertex2f(x1 + w, y1 + h);
+				GL.glVertex2f(x1, y1 + h);
+				GL.glEnd();
+				//g.fillRect((float) x, (float) y, (float) width, (float) height);
 				g.rotate((float) (x + width / 2), (float) (y + height / 2), -(float) (angle * 180 / Math.PI));
 			}
 		}
@@ -426,10 +449,10 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 			image.setRotation((float) (angle * 180 / Math.PI));
 			
 			if (tint == null) {
-				if (colorNotWhite) {
+				/*if (colorNotWhite) {
 					g.setColor(Color.white);
 					colorNotWhite = false;
-				}
+				}*/
 				image.setAlpha((float) alpha);
 				image.draw((float) x, (float) y, (float) (width), (float) (height));
 			} else {
