@@ -5,7 +5,6 @@ import com.zarkonnen.catengine.util.Pt;
 import com.zarkonnen.catengine.util.ScreenMode;
 import java.io.InputStream;
 import java.lang.ref.SoftReference;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -263,6 +262,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 
 		@Override
 		public void play(String sound, double pitch, double volume, double x, double y) {
+			if (volume == 0) { return; }
 			synchronized (soundLoadMutex) {
 				try {
 					Sound s = getSound(sound);
