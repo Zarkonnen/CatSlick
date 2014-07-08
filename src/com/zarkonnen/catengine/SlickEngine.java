@@ -532,8 +532,10 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		}
 		if (image == null && img.flipped && images.containsKey(img.src)) {
 			image = images.get(img.src).get();
-			image = image.getFlippedCopy(true, false);
-			images.put(img.key, new SoftReference<Image>(image));
+			if (image != null) {
+				image = image.getFlippedCopy(true, false);
+				images.put(img.key, new SoftReference<Image>(image));
+			}
 		}
 		if (image == null) {
 			image = loadImage(img.src);
