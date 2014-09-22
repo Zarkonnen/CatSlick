@@ -285,10 +285,21 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 						return snd;
 					}
 				}
-
-				Sound snd = new Sound(SlickEngine.class.getResource(soundLoadBase + sound));
-				sounds.put(sound, new SoftReference<Sound>(snd));
-				return snd;
+				
+				SlickException ex = null;
+				for (int i = 0; i < 5; i++) {
+					try {
+						Sound snd = new Sound(SlickEngine.class.getResource(soundLoadBase + sound));
+						sounds.put(sound, new SoftReference<Sound>(snd));
+						return snd;
+					} catch (SlickException e) {
+						ex = e;
+					}
+				}
+				if (ex != null) {
+					throw ex;
+				}
+				return null;
 			}
 		}
 		
