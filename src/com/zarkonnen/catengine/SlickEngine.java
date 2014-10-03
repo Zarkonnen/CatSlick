@@ -15,7 +15,7 @@ import org.newdawn.slick.opengl.TextureImpl;
 import org.newdawn.slick.opengl.renderer.Renderer;
 import org.newdawn.slick.opengl.renderer.SGL;
 
-public class SlickEngine extends BasicGame implements Engine, KeyListener, ExceptionHandler {
+public class SlickEngine extends BasicGame implements Engine, KeyListener, ExceptionHandler, MouseListener {
 	public SlickEngine(String title, String loadBase, String soundLoadBase, Integer fps) {
 		super(title);
 		this.loadBase = loadBase;
@@ -41,6 +41,8 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 	ExceptionHandler eh = this;
 	int mouseWheelMovement = 0;
 	char lastChar = 0;
+	
+	Pt lastClick; int clickButton;
 	
 	@Override
 	public void mouseWheelMoved(int i) {
@@ -68,7 +70,10 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 	public void update(GameContainer gc, int delta) throws SlickException {
 		g.input(new MyInput(gc, delta));
 		gc.getInput().clearKeyPressedRecord();
+		gc.getInput().setMouseClickTolerance(10);
 		mouseWheelMovement = 0;
+		lastClick = null;
+		clickButton = 0;
 	}
 
 	@Override
@@ -125,16 +130,10 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 	private class MyInput implements com.zarkonnen.catengine.Input {
 		GameContainer gc;
 		int delta;
-		boolean clicked;
 		
 		public MyInput(GameContainer gc, int delta) {
 			this.gc = gc;
 			this.delta = delta;
-			for (int i = 3; i >= 0; i--) {
-				if (gc.getInput().isMousePressed(i)) {
-					clicked = true;
-				}
-			}
 		}
 
 		@Override
@@ -177,17 +176,12 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		
 		@Override
 		public Pt clicked() {
-			return clicked ? cursor() : null;
+			return lastClick;
 		}
 
 		@Override
 		public int clickButton() {
-			for (int i = 3; i >= 0; i--) {
-				if (gc.getInput().isMouseButtonDown(i)) {
-					return i + 1;
-				}
-			}
-			return 0;
+			return clickButton;
 		}
 
 		@Override
@@ -253,9 +247,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		public void preloadSounds(List<String> l) {
 			synchronized (soundLoadMutex) {
 				for (String snd : l) {
-					try { getSound(snd); } catch (Exception e) {
-						eh.handle(e, false);
-					}
+					getSound(snd);
 				}
 			}
 		}
@@ -264,18 +256,14 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		public void play(String sound, double pitch, double volume, double x, double y) {
 			if (volume == 0) { return; }
 			synchronized (soundLoadMutex) {
-				try {
-					Sound s = getSound(sound);
-					if (s != null) {
-						s.playAt((float) pitch, (float) volume, (float) x, (float) y, 0);
-					}
-				} catch (SlickException e) {
-					eh.handle(e, false);
+				Sound s = getSound(sound);
+				if (s != null) {
+					s.playAt((float) pitch, (float) volume, (float) x, (float) y, 0);
 				}
 			}
 		}
 		
-		private Sound getSound(String sound) throws SlickException {
+		private Sound getSound(String sound) {
 			synchronized (soundLoadMutex) {
 				if (!sound.contains(".")) { sound += ".ogg"; }
 				SoftReference<Sound> ref = sounds.get(sound);
@@ -286,18 +274,12 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 					}
 				}
 				
-				Exception ex = null;
 				for (int i = 0; i < 5; i++) {
 					try {
 						Sound snd = new Sound(SlickEngine.class.getResource(soundLoadBase + sound));
 						sounds.put(sound, new SoftReference<Sound>(snd));
 						return snd;
-					} catch (Exception e) {
-						ex = e;
-					}
-				}
-				if (ex != null) {
-					throw new RuntimeException(ex);
+					} catch (Exception e) {}
 				}
 				return null;
 			}
@@ -594,5 +576,12 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		if (c == lastChar) {
 			lastChar = 0;
 		}
+	}
+	
+	@Override
+	public void mouseClicked(int button, int x, int y, int clickCount) {
+		super.mouseClicked(button, x, y, clickCount);
+		lastClick = new Pt(x, y);
+		clickButton = button + 1;
 	}
 }
