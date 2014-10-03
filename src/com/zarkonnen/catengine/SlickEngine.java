@@ -253,7 +253,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		public void preloadSounds(List<String> l) {
 			synchronized (soundLoadMutex) {
 				for (String snd : l) {
-					try { getSound(snd); } catch (SlickException e) {
+					try { getSound(snd); } catch (Exception e) {
 						eh.handle(e, false);
 					}
 				}
@@ -286,18 +286,18 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 					}
 				}
 				
-				SlickException ex = null;
+				Exception ex = null;
 				for (int i = 0; i < 5; i++) {
 					try {
 						Sound snd = new Sound(SlickEngine.class.getResource(soundLoadBase + sound));
 						sounds.put(sound, new SoftReference<Sound>(snd));
 						return snd;
-					} catch (SlickException e) {
+					} catch (Exception e) {
 						ex = e;
 					}
 				}
 				if (ex != null) {
-					throw ex;
+					throw new RuntimeException(ex);
 				}
 				return null;
 			}
