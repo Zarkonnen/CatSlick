@@ -318,6 +318,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 									if (m == currentMusic && doneCallback != null) {
 										doneCallback.run(music, volume);
 									}
+									currentMusic = null;
 								}
 
 								@Override
@@ -339,6 +340,15 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 				if (currentMusic != null && currentMusic.playing()) {
 					currentMusic.stop();
 					currentMusic = null;
+				}
+			}
+		}
+		
+		@Override
+		public void fadeOutMusic(int ms) {
+			synchronized (soundLoadMutex) {
+				if (currentMusic != null && currentMusic.playing()) {
+					currentMusic.fade(ms, 0, true);
 				}
 			}
 		}
