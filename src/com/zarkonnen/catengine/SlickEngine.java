@@ -328,7 +328,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 							});
 						}
 					} catch (Exception e) {
-						eh.handle(new RuntimeException("Could not play " + music, e), false);
+						// eh.handle(new RuntimeException("Could not play " + music, e), false); qqDPS Ignore music playback failures for now.
 					}
 				}
 			}.start();
