@@ -8,6 +8,7 @@ import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
 import org.newdawn.slick.*;
@@ -35,12 +36,15 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 	boolean cursorVisible = true;
 	String lastKeyPressed;
 	final HashMap<String, SoftReference<Image>> images = new HashMap<String, SoftReference<Image>>();
-	final HashMap<String, SoftReference<Music>> musics = new HashMap<String, SoftReference<Music>>();
+	final HashMap<String, Music> musics = new HashMap<String, Music>();
 	final HashMap<String, SoftReference<Sound>> sounds = new HashMap<String, SoftReference<Sound>>();
 	final Object soundLoadMutex = new Object();
 	ExceptionHandler eh = this;
 	int mouseWheelMovement = 0;
 	char lastChar = 0;
+	int musicThreeStrikes = 3;
+	
+	byte[] emergencyMemoryStash = null;
 	
 	Pt lastClick; int clickButton;
 	
@@ -68,6 +72,9 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 
 	@Override
 	public void update(GameContainer gc, int delta) throws SlickException {
+		if (emergencyMemoryStash == null) {
+			emergencyMemoryStash = new byte[8 * 1024 * 1024]; // Allocate 8 MB to ditch in a hurry if needed.
+		}
 		g.input(new MyInput(gc, delta));
 		gc.getInput().clearKeyPressedRecord();
 		gc.getInput().setMouseClickTolerance(10);
@@ -286,18 +293,31 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		}
 		
 		private Music getMusic(String music) throws SlickException {
+			if (musicThreeStrikes <= 0) {
+				return null;
+			}
 			synchronized (soundLoadMutex) {
 				if (!music.contains(".")) { music += ".ogg"; }
 				if (musics.containsKey(music)) {
-					SoftReference<Music> sr = musics.get(music);
-					Music m = sr.get();
-					if (m != null) {
-						return m;
-					}
+					return musics.get(music);
 				}
-				Music m = new Music(SlickEngine.class.getResource(soundLoadBase + music));
-				musics.put(music, new SoftReference<Music>(m));
-				return m;
+				try {
+					Music m = new Music(SlickEngine.class.getResource(soundLoadBase + music));
+					musics.put(music, m);
+					return m;
+				} catch (OutOfMemoryError oom) {
+					emergencyMemoryStash = null;
+					Runtime.getRuntime().gc();
+					for (Music m : musics.values()) {
+						try {
+							m.release();
+						} catch (Throwable t) {}
+					}
+					musics.clear();
+					Runtime.getRuntime().gc();
+					musicThreeStrikes--;
+					return null;
+				}
 			}
 		}
 
@@ -310,6 +330,10 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 						synchronized (soundLoadMutex) {
 							stopMusic();
 							currentMusic = getMusic(music);
+							if (currentMusic == null) {
+								doneCallback.run(music, volume);
+								return;
+							}
 							currentMusic.play(1.0f, (float) volume);
 							if (startCallback != null) { startCallback.run(music, volume); }
 							currentMusic.addListener(new MusicListener() {
