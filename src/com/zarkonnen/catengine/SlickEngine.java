@@ -292,6 +292,15 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 			}
 		}
 		
+		@Override
+		public void preloadMusic(String music) {
+			try {
+				getMusic(music);
+			} catch (Exception e) {
+				throw new RuntimeException("Unable to load music " + music, e);
+			}
+		}
+		
 		private Music getMusic(String music) throws SlickException {
 			if (musicThreeStrikes <= 0) {
 				return null;
