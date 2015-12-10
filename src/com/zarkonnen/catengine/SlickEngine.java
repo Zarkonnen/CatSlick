@@ -3,6 +3,8 @@ package com.zarkonnen.catengine;
 import com.zarkonnen.catengine.util.Clr;
 import com.zarkonnen.catengine.util.Pt;
 import com.zarkonnen.catengine.util.ScreenMode;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
@@ -43,6 +45,8 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 	int mouseWheelMovement = 0;
 	char lastChar = 0;
 	int musicThreeStrikes = 3;
+	final ArrayList<File> additionalLoadBases = new ArrayList<File>();
+	final ArrayList<File> additionalSoundLoadBases = new ArrayList<File>();
 	
 	byte[] emergencyMemoryStash = null;
 	
@@ -134,13 +138,33 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		agc.destroy();
 	}
 	
-	private class MyInput implements com.zarkonnen.catengine.Input {
+	public class MyInput implements com.zarkonnen.catengine.Input {
 		GameContainer gc;
 		int delta;
 		
 		public MyInput(GameContainer gc, int delta) {
 			this.gc = gc;
 			this.delta = delta;
+		}
+		
+		public void addLoadBase(File f) {
+			additionalLoadBases.add(f);
+			images.clear();
+		}
+		
+		public void clearLoadBases() {
+			additionalLoadBases.clear();
+			images.clear();
+		}
+		
+		public void addSoundLoadBase(File f) {
+			additionalSoundLoadBases.add(f);
+			sounds.clear();
+		}
+		
+		public void clearSoundLoadBases() {
+			additionalSoundLoadBases.clear();
+			sounds.clear();
 		}
 
 		@Override
@@ -282,11 +306,30 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 				}
 				
 				for (int i = 0; i < 5; i++) {
+					Sound snd = null;
 					try {
-						Sound snd = new Sound(SlickEngine.class.getResource(soundLoadBase + sound));
-						sounds.put(sound, new SoftReference<Sound>(snd));
-						return snd;
+						snd = new Sound(SlickEngine.class.getResource(soundLoadBase + sound));
 					} catch (Throwable e) {}
+					
+					if (snd == null) {
+						for (File slb : additionalSoundLoadBases) {
+							File f = new File(slb, sound);
+							if (f.exists()) {
+								FileInputStream fis = null;
+								try {
+									fis = new FileInputStream(f);
+									snd = new Sound(fis, sound);
+								} catch (Throwable e) {}
+								finally { try { fis.close(); } catch (Exception e){} }
+								if (snd != null) {
+									break;
+								}
+							}
+						}
+					}
+					
+					sounds.put(sound, new SoftReference<Sound>(snd));
+					return snd;
 				}
 				return null;
 			}
@@ -595,12 +638,26 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		if (!name.contains(".")) {
 			name = name + ".png";
 		}
-		InputStream is = SlickEngine.class.getResourceAsStream(loadBase + name);
+		InputStream is = null;
 		try {
+			is = SlickEngine.class.getResourceAsStream(loadBase + name);
 			return new Image(is, name, false);
 		} catch (Exception e) {
+			for (File ilb : additionalLoadBases) {
+				File f = new File(ilb, name);
+				if (f.exists()) {
+					FileInputStream fis = null;
+					try {
+						fis = new FileInputStream(f);
+						return new Image(fis, name, false);
+					} catch (Exception e2) {}
+					finally { try { fis.close(); } catch (Exception e2) {} }
+				}
+			}
 			eh.handle(e, false);
 			return null;
+		} finally {
+			try { is.close(); } catch (Exception e) {}
 		}
 	}
 
