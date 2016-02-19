@@ -639,21 +639,21 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 			name = name + ".png";
 		}
 		InputStream is = null;
+		for (File alb : additionalLoadBases) {
+			File f = new File(alb, name);
+			if (f.exists()) {
+				FileInputStream fis = null;
+				try {
+					fis = new FileInputStream(f);
+					return new Image(fis, f.getAbsolutePath(), false);
+				} catch (Exception e2) {}
+				finally { try { fis.close(); } catch (Exception e2) {} }
+			}
+		}
 		try {
 			is = SlickEngine.class.getResourceAsStream(loadBase + name);
 			return new Image(is, name, false);
 		} catch (Exception e) {
-			for (File ilb : additionalLoadBases) {
-				File f = new File(ilb, name);
-				if (f.exists()) {
-					FileInputStream fis = null;
-					try {
-						fis = new FileInputStream(f);
-						return new Image(fis, name, false);
-					} catch (Exception e2) {}
-					finally { try { fis.close(); } catch (Exception e2) {} }
-				}
-			}
 			eh.handle(e, false);
 			return null;
 		} finally {
