@@ -5,12 +5,12 @@ import com.zarkonnen.catengine.util.Pt;
 import com.zarkonnen.catengine.util.ScreenMode;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
 import org.newdawn.slick.*;
@@ -148,7 +148,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		}
 		
 		public void addLoadBase(File f) {
-			additionalLoadBases.add(f);
+			additionalLoadBases.add(0, f);
 			images.clear();
 		}
 		
@@ -158,7 +158,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		}
 		
 		public void addSoundLoadBase(File f) {
-			additionalSoundLoadBases.add(f);
+			additionalSoundLoadBases.add(0, f);
 			sounds.clear();
 		}
 		
@@ -354,9 +354,28 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 					return musics.get(music);
 				}
 				try {
-					Music m = new Music(SlickEngine.class.getResource(soundLoadBase + music));
-					musics.put(music, m);
-					return m;
+					InputStream is = SlickEngine.class.getResourceAsStream(soundLoadBase + music);
+					if (is != null) {
+						Music m = new Music(is, music);
+						musics.put(music, m);
+						return m;
+					} else {
+						for (File slb : additionalSoundLoadBases) {
+							File f = new File(slb, music);
+							if (f.exists()) {
+								FileInputStream fis = null;
+								try {
+									fis = new FileInputStream(f);
+									Music m = new Music(fis, music);
+									musics.put(music, m);
+									return m;
+								} catch (FileNotFoundException fnfe) {
+									// Ignore.
+								} finally { try { fis.close(); } catch (Exception e){} }
+							}
+						}
+						return null;
+					}
 				} catch (OutOfMemoryError oom) {
 					emergencyMemoryStash = null;
 					Runtime.getRuntime().gc();
@@ -652,7 +671,11 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		}
 		try {
 			is = SlickEngine.class.getResourceAsStream(loadBase + name);
-			return new Image(is, name, false);
+			if (is != null) {
+				return new Image(is, name, false);
+			} else {
+				return null;
+			}
 		} catch (Exception e) {
 			eh.handle(e, false);
 			return null;
