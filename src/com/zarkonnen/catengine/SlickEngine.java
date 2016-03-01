@@ -639,7 +639,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 			image = loadImage(img.src);
 			images.put(img.src, new SoftReference<Image>(image));
 			if (img.flipped) {
-				image = image.getFlippedCopy(true, false);
+				image = image == null ? null : image.getFlippedCopy(true, false);
 				images.put(img.key, new SoftReference<Image>(image));
 			}
 		}
