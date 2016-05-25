@@ -206,6 +206,16 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		}
 		
 		@Override
+		public int mouseDownButton() {
+			for (int i = 3; i >= 0; i--) {
+				if (gc.getInput().isMouseButtonDown(i)) {
+					return i + 1;
+				}
+			}
+			return 0;
+		}
+		
+		@Override
 		public Pt clicked() {
 			return lastClick;
 		}
