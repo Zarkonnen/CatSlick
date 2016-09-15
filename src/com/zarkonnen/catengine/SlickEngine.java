@@ -295,7 +295,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 
 		@Override
 		public void play(String sound, double pitch, double volume, double x, double y) {
-			if (volume == 0) { return; }
+			if (volume < 0.01) { return; }
 			synchronized (soundLoadMutex) {
 				Sound s = getSound(sound);
 				if (s != null) {
