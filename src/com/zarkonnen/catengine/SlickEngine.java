@@ -39,7 +39,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 	String lastKeyPressed;
 	final HashMap<String, SoftReference<Image>> images = new HashMap<String, SoftReference<Image>>();
 	final HashMap<String, Music> musics = new HashMap<String, Music>();
-	final HashMap<String, SoftReference<Sound>> sounds = new HashMap<String, SoftReference<Sound>>();
+	final HashMap<String, SoftReference<Sound2>> sounds = new HashMap<String, SoftReference<Sound2>>();
 	final Object soundLoadMutex = new Object();
 	ExceptionHandler eh = this;
 	int mouseWheelMovement = 0;
@@ -297,28 +297,28 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		public void play(String sound, double pitch, double volume, double x, double y) {
 			if (volume < 0.01) { return; }
 			synchronized (soundLoadMutex) {
-				Sound s = getSound(sound);
+				Sound2 s = getSound(sound);
 				if (s != null) {
 					s.playAt((float) pitch, (float) volume, (float) x, (float) y, 0);
 				}
 			}
 		}
 		
-		private Sound getSound(String sound) {
+		private Sound2 getSound(String sound) {
 			synchronized (soundLoadMutex) {
 				if (!sound.contains(".")) { sound += ".ogg"; }
-				SoftReference<Sound> ref = sounds.get(sound);
+				SoftReference<Sound2> ref = sounds.get(sound);
 				if (ref != null) {
-					Sound snd = ref.get();
+					Sound2 snd = ref.get();
 					if (snd != null) {
 						return snd;
 					}
 				}
 				
 				for (int i = 0; i < 5; i++) {
-					Sound snd = null;
+					Sound2 snd = null;
 					try {
-						snd = new Sound(SlickEngine.class.getResource(soundLoadBase + sound));
+						snd = new Sound2(SlickEngine.class.getResource(soundLoadBase + sound));
 					} catch (Throwable e) {}
 					
 					if (snd == null) {
@@ -328,7 +328,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 								FileInputStream fis = null;
 								try {
 									fis = new FileInputStream(f);
-									snd = new Sound(fis, sound);
+									snd = new Sound2(fis, sound);
 								} catch (Throwable e) {}
 								finally { try { fis.close(); } catch (Exception e){} }
 								if (snd != null) {
@@ -338,7 +338,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 						}
 					}
 					
-					sounds.put(sound, new SoftReference<Sound>(snd));
+					sounds.put(sound, new SoftReference<Sound2>(snd));
 					return snd;
 				}
 				return null;
