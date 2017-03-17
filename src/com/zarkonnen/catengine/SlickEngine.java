@@ -39,7 +39,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 	String lastKeyPressed;
 	final HashMap<String, SoftReference<Image>> images = new HashMap<String, SoftReference<Image>>();
 	final HashMap<String, Music> musics = new HashMap<String, Music>();
-	final HashMap<String, SoftReference<Sound2>> sounds = new HashMap<String, SoftReference<Sound2>>();
+	final HashMap<String, Sound2> sounds = new HashMap<String, Sound2>();
 	final Object soundLoadMutex = new Object();
 	ExceptionHandler eh = this;
 	int mouseWheelMovement = 0;
@@ -136,6 +136,34 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 	@Override
 	public void destroy() {
 		agc.destroy();
+	}
+	
+	public static class MyLoop implements Loop {
+		private final Sound2 s;
+
+		public MyLoop(Sound2 s) {
+			this.s = s;
+		}
+
+		@Override
+		public void stop() {
+			s.stop();
+		}
+
+		@Override
+		public void setLocation(float x, float y) {
+			s.setLocation(x, y, 0);
+		}
+
+		@Override
+		public void setPitch(float pitch) {
+			s.setPitch(pitch);
+		}
+
+		@Override
+		public void setVolume(float volume) {
+			s.setVolume(volume);
+		}
 	}
 	
 	public class MyInput implements com.zarkonnen.catengine.Input {
@@ -304,19 +332,30 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 			}
 		}
 		
+		@Override
+		public Loop loop(String sound, double pitch, double volume, double x, double y) {
+			if (volume < 0.01) { return null; }
+			Sound2 s = null;
+			synchronized (soundLoadMutex) {
+				s = getSound(sound);
+			}
+			if (s != null) {
+				s = new Sound2(s);
+				s.loopAt((float) pitch, (float) volume, (float) x, (float) y, 0);
+				return new MyLoop(s);
+			}
+			return null;
+		}
+		
 		private Sound2 getSound(String sound) {
 			synchronized (soundLoadMutex) {
 				if (!sound.contains(".")) { sound += ".ogg"; }
-				SoftReference<Sound2> ref = sounds.get(sound);
-				if (ref != null) {
-					Sound2 snd = ref.get();
-					if (snd != null) {
-						return snd;
-					}
+				Sound2 snd = sounds.get(sound);
+				if (snd != null) {
+					return snd;
 				}
 				
 				for (int i = 0; i < 5; i++) {
-					Sound2 snd = null;
 					try {
 						snd = new Sound2(SlickEngine.class.getResource(soundLoadBase + sound));
 					} catch (Throwable e) {}
@@ -338,7 +377,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 						}
 					}
 					
-					sounds.put(sound, new SoftReference<Sound2>(snd));
+					sounds.put(sound, snd);
 					return snd;
 				}
 				return null;

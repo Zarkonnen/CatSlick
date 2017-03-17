@@ -26,7 +26,7 @@ public class AudioImpl2 implements Audio {
 	 * @param store The sound store from which the sound was created
 	 * @param buffer The buffer containing the sound data
 	 */
-	AudioImpl2(SoundStore2 store, int buffer) {
+	public AudioImpl2(SoundStore2 store, int buffer) {
 		this.store = store;
 		this.buffer = buffer;
 		
@@ -38,13 +38,14 @@ public class AudioImpl2 implements Audio {
 		int samples = bytes / (bits / 8);
 		length = (samples / (float) freq) / channels;
 	}
-	
+		
 	/**
 	 * Get the ID of the OpenAL buffer holding this data (if any). This method
 	 * is not valid with streaming resources.
 	 * 
 	 * @return The ID of the OpenAL buffer holding this data 
 	 */
+	@Override
 	public int getBufferID() {
 		return buffer;
 	}
@@ -59,6 +60,7 @@ public class AudioImpl2 implements Audio {
 	/**
 	 * @see org.newdawn.slick.openal.Audio#stop()
 	 */
+	@Override
 	public void stop() {
 		if (index != -1) {
 			store.stopSource(index);
@@ -66,9 +68,10 @@ public class AudioImpl2 implements Audio {
 		}
 	}
 	
-	/**
+	/*
 	 * @see org.newdawn.slick.openal.Audio#isPlaying()
 	 */
+	@Override
 	public boolean isPlaying() {
 		if (index != -1) {
 			return store.isPlaying(index);
@@ -77,26 +80,29 @@ public class AudioImpl2 implements Audio {
 		return false;
 	}
 	
-	/**
+	/*
 	 * @see org.newdawn.slick.openal.Audio#playAsSoundEffect(float, float, boolean)
 	 */
+	@Override
 	public int playAsSoundEffect(float pitch, float gain, boolean loop) {
 		index = store.playAsSound(buffer, pitch, gain, loop);
 		return store.getSource(index);
 	}
 
 
-	/**
+	/*
 	 * @see org.newdawn.slick.openal.Audio#playAsSoundEffect(float, float, boolean, float, float, float)
 	 */
+	@Override
 	public int playAsSoundEffect(float pitch, float gain, boolean loop, float x, float y, float z) {
 		index = store.playAsSoundAt(buffer, pitch, gain, loop, x, y, z);
 		return store.getSource(index);
 	}
 	
-	/**
+	/*
 	 * @see org.newdawn.slick.openal.Audio#playAsMusic(float, float, boolean)
 	 */
+	@Override
 	public int playAsMusic(float pitch, float gain, boolean loop) {
 		store.playAsMusic(buffer, pitch, gain, loop);
 		index = 0;
@@ -117,9 +123,10 @@ public class AudioImpl2 implements Audio {
 		SoundStore.get().restartLoop();
 	}
 	
-	/**
+	/*
 	 * @see org.newdawn.slick.openal.Audio#setPosition(float)
 	 */
+	@Override
 	public boolean setPosition(float position) {
 		position = position % length;
 		
@@ -130,9 +137,10 @@ public class AudioImpl2 implements Audio {
 		return true;
 	}
 
-	/**
+	/*
 	 * @see org.newdawn.slick.openal.Audio#getPosition()
 	 */
+	@Override
 	public float getPosition() {
 		return AL10.alGetSourcef(store.getSource(index), AL11.AL_SEC_OFFSET);
 	}
@@ -144,4 +152,19 @@ public class AudioImpl2 implements Audio {
 
 	@Override
 	public void release() {} // qqDPS Argh
+
+	public void setVolume(float volume) {
+		if (index == -1) { return; }
+		AL10.alSourcef(store.getSource(index), AL10.AL_GAIN, volume * store.getSoundVolume());
+	}
+
+	public void setPitch(float pitch) {
+		if (index == -1) { return; }
+		AL10.alSourcef(store.getSource(index), AL10.AL_PITCH, pitch);
+	}
+
+	public void setLocation(float x, float y, int z) {
+		if (index == -1) { return; }
+		AL10.alSource3f(store.getSource(index), AL10.AL_POSITION, x, y, z);
+	}
 }

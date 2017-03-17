@@ -350,7 +350,7 @@ public class SoundStore2 {
 				FloatBuffer listenerVel = BufferUtils.createFloatBuffer(3).put(
 						new float[] { 0.0f, 0.0f, 0.0f });
 				FloatBuffer listenerPos = BufferUtils.createFloatBuffer(3).put(
-						new float[] { 0.0f, 0.0f, 0.0f });
+						new float[] { 0.0f, 0.0f, -0.5f });
 				listenerPos.flip();
 				listenerVel.flip();
 				listenerOri.flip();
@@ -386,86 +386,6 @@ public class SoundStore2 {
 		return playAsSoundAt(buffer, pitch, gain, loop, 0, 0, 0);
 	}
 	
-	boolean auxInited = false;
-	int auxEffectSlot = -1;
-	private void initAux(int source) {
-		//if (auxInited) { return; }
-		ALCdevice alcd = alcOpenDevice(null);
-		IntBuffer ib = ByteBuffer.allocateDirect(4).asIntBuffer();
-		alcGetInteger(alcd, ALC_MAX_AUXILIARY_SENDS, ib);
-		System.out.println("ALC_MAX_AUXILIARY_SENDS: " + ib.get(0));
-		auxInited = true;
-		/*System.out.println("initing effect slot");
-		auxEffectSlot = alGenAuxiliaryEffectSlots();
-		System.out.println("result " + alGetError());
-		System.out.println("slot is " + auxEffectSlot);
-		
-		int effect = alGenEffects();
-		if ( alGetError() != AL_NO_ERROR ) {
-			System.out.println("Effect creation failed!");
-			return;
-		}
-		
-		// Set first Effect Type to Reverb and change Decay Time
-		alGetError();
-		if ( alIsEffect(effect) ) {
-			alEffecti(effect, AL_EFFECT_TYPE, AL_EFFECT_REVERB);
-			if ( alGetError() != AL_NO_ERROR ) {
-				System.out.println("Reverb effect not supported.");
-			} else {
-				alEffectf(effect, AL_REVERB_DECAY_TIME, 5.0f);
-				System.out.println("Reverb effect created.");
-			}
-		} else {
-			System.out.println("First effect not a valid effect.");
-			return;
-		}*/
-		
-		int filter = alGenFilters();
-		if ( alGetError() != AL_NO_ERROR ) {
-			System.out.println("Failed to create filter.");
-			return;
-		}
-		System.out.println("Generated a filter.");
-		if ( alIsFilter(filter) ) {
-			// Set Filter type to Low-Pass and set parameters
-			alFilteri(filter, AL_FILTER_TYPE, AL_FILTER_LOWPASS);
-			if ( alGetError() != AL_NO_ERROR ) {
-				System.out.println("Low pass filter not supported.");
-			} else {
-				alFilterf(filter, AL_LOWPASS_GAIN, 0.9f);
-				alFilterf(filter, AL_LOWPASS_GAINHF, 0.3f);
-				System.out.println("Low pass filter created.");
-			}
-		}
-		
-		alSourcei(sources.get(source), AL_DIRECT_FILTER, filter);
-		if ( alGetError() != AL_NO_ERROR ) {
-			System.out.println("Failed to create filter");
-			return;
-		}
-		System.out.println("filter created");
-		
-		/*
-		// Attach Effect to Auxiliary Effect Slot
-		alAuxiliaryEffectSloti(auxEffectSlot, AL_EFFECTSLOT_EFFECT, effect);
-		if ( alGetError() != AL_NO_ERROR ) {
-			System.out.println("Failed to attach effect to aux effect slot.");
-			return;
-		}
-		System.out.println("Successfully loaded effect into effect slot.");
-
-		// Configure Source Auxiliary Effect Slot Sends
-		// Set Source Send 0 to feed auxEffectSlots[0] without filtering
-		alSource3i(sources.get(source), AL_AUXILIARY_SEND_FILTER, auxEffectSlot, 0, filter);
-		int error = alGetError();
-		if ( error != AL_NO_ERROR ) {
-			System.out.println("Failed to configure Source Send 0");
-			return;
-		}
-		System.out.println("all set up?!");*/
-	}
-	
 	/**
 	 * Play the specified buffer as a sound effect with the specified
 	 * pitch and gain.
@@ -490,7 +410,6 @@ public class SoundStore2 {
 				if (nextSource == -1) {
 					return -1;
 				}
-				initAux(nextSource);
 				
 				AL10.alSourceStop(sources.get(nextSource));
 				

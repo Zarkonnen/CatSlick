@@ -4,6 +4,7 @@ import java.io.InputStream;
 import java.net.URL;
 
 import org.newdawn.slick.openal.Audio;
+import org.newdawn.slick.openal.AudioImpl2;
 import org.newdawn.slick.openal.SoundStore2;
 import org.newdawn.slick.util.Log;
 
@@ -16,6 +17,10 @@ import org.newdawn.slick.util.Log;
 public class Sound2 {
 	/** The internal sound effect represent this sound */
 	private Audio sound;
+	
+	public Sound2(Sound2 original) {
+		sound = new AudioImpl2(SoundStore2.get(), ((AudioImpl2) original.sound).getBufferID());
+	}
 
 	/**
 	 * Create a new Sound 
@@ -140,6 +145,20 @@ public class Sound2 {
 	public void playAt(float pitch, float volume, float x, float y, float z) {
 		sound.playAsSoundEffect(pitch, volume * SoundStore2.get().getSoundVolume(), false, x,y,z);
 	}
+	
+	/**
+	 * Loop a sound effect in a particular location
+	 * 
+	 * @param pitch The pitch to play the sound effect at
+	 * @param volume The volumen to play the sound effect at
+	 * @param x The x position of the source of the effect
+ 	 * @param y The y position of the source of the effect
+	 * @param z The z position of the source of the effect
+	 */
+	public void loopAt(float pitch, float volume, float x, float y, float z) {
+		sound.playAsSoundEffect(pitch, volume * SoundStore2.get().getSoundVolume(), true, x,y,z);
+	}
+	
 	/**
 	 * Loop this sound effect at default volume and pitch
 	 */
@@ -171,5 +190,17 @@ public class Sound2 {
 	 */
 	public void stop() {
 		sound.stop();
+	}
+
+	public void setVolume(float volume) {
+		((AudioImpl2) sound).setVolume(volume);
+	}
+
+	public void setPitch(float pitch) {
+		((AudioImpl2) sound).setPitch(pitch);
+	}
+
+	public void setLocation(float x, float y, int z) {
+		((AudioImpl2) sound).setLocation(x, y, z);
 	}
 }
