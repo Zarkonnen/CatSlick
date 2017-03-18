@@ -78,7 +78,7 @@ public class SoundStore2 {
     private FloatBuffer sourcePos = BufferUtils.createFloatBuffer(3);
     
     /** The maximum number of sources */
-    private int maxSources = 64;
+    private int maxSources = 128;
     
 	/**
 	 * Create a new sound store
@@ -978,5 +978,17 @@ public class SoundStore2 {
 	 */
 	public int getSourceCount() {
 		return sourceCount;
+	}
+	
+	public int getUsedSources() {
+		int used = 0;
+		for (int i=1;i<sourceCount-1;i++) {
+			int state = AL10.alGetSourcei(sources.get(i), AL10.AL_SOURCE_STATE);
+			
+			if ((state == AL10.AL_PLAYING) || (state == AL10.AL_PAUSED)) {
+				used++;
+			}
+		}
+		return used;
 	}
 }
