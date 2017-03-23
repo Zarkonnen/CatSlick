@@ -29,7 +29,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 	protected static SGL GL = Renderer.get();
 	boolean doExit = false;
 	int fps;
-	Music currentMusic;
+	Music2 currentMusic;
 	String loadBase;
 	String soundLoadBase;
 	MyAppGameContainer agc;
@@ -38,7 +38,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 	boolean cursorVisible = true;
 	String lastKeyPressed;
 	final HashMap<String, SoftReference<Image>> images = new HashMap<String, SoftReference<Image>>();
-	final HashMap<String, Music> musics = new HashMap<String, Music>();
+	final HashMap<String, Music2> musics = new HashMap<String, Music2>();
 	final HashMap<String, Sound2> sounds = new HashMap<String, Sound2>();
 	final Object soundLoadMutex = new Object();
 	ExceptionHandler eh = this;
@@ -79,6 +79,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		if (emergencyMemoryStash == null) {
 			emergencyMemoryStash = new byte[8 * 1024 * 1024]; // Allocate 8 MB to ditch in a hurry if needed.
 		}
+		Music2.poll(delta);
 		g.input(new MyInput(gc, delta));
 		gc.getInput().clearKeyPressedRecord();
 		gc.getInput().setMouseClickTolerance(10);
@@ -264,10 +265,12 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		@Override
 		public Input setMode(ScreenMode mode) {
 			try {
+				System.setProperty("org.lwjgl.opengl.Window.undecorated", mode.fullscreenWindow ? "true" : "false");
 				gc.setMouseGrabbed(false);
 				agc.setDisplayMode(mode.width, mode.height, mode.fullscreen);
 				fullscreen = mode.fullscreen;
 				setCursorVisible(cursorVisible);
+				System.setProperty("org.lwjgl.opengl.Window.undecorated", mode.fullscreenWindow ? "true" : "false");
 			} catch (Exception e) {
 				eh.handle(e, false);
 			}
@@ -393,7 +396,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 			}
 		}
 		
-		private Music getMusic(String music) throws SlickException {
+		private Music2 getMusic(String music) throws SlickException {
 			if (musicThreeStrikes <= 0) {
 				return null;
 			}
@@ -405,7 +408,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 				try {
 					InputStream is = SlickEngine.class.getResourceAsStream(soundLoadBase + music);
 					if (is != null) {
-						Music m = new Music(is, music);
+						Music2 m = new Music2(is, music);
 						musics.put(music, m);
 						return m;
 					} else {
@@ -415,7 +418,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 								FileInputStream fis = null;
 								try {
 									fis = new FileInputStream(f);
-									Music m = new Music(fis, music);
+									Music2 m = new Music2(fis, music);
 									musics.put(music, m);
 									return m;
 								} catch (FileNotFoundException fnfe) {
@@ -428,14 +431,6 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 				} catch (OutOfMemoryError oom) {
 					emergencyMemoryStash = null;
 					Runtime.getRuntime().gc();
-					for (Music m : musics.values()) {
-						try {
-							m.release();
-						} catch (Throwable t) {}
-					}
-					musics.clear();
-					Runtime.getRuntime().gc();
-					musicThreeStrikes--;
 					return null;
 				}
 			}
@@ -456,9 +451,9 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 							}
 							currentMusic.play(1.0f, (float) volume);
 							if (startCallback != null) { startCallback.run(music, volume); }
-							currentMusic.addListener(new MusicListener() {
+							currentMusic.addListener(new MusicListener2() {
 								@Override
-								public void musicEnded(Music m) {
+								public void musicEnded(Music2 m) {
 									if (m == currentMusic && doneCallback != null) {
 										doneCallback.run(music, volume);
 									}
@@ -466,7 +461,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 								}
 
 								@Override
-								public void musicSwapped(Music oldM, Music newM) {
+								public void musicSwapped(Music2 oldM, Music2 newM) {
 									// Ignore.
 								}
 							});
