@@ -200,7 +200,7 @@ public class Sound2 {
 		((AudioImpl2) sound).setPitch(pitch);
 	}
 
-	public void setLocation(float x, float y, int z) {
+	public void setLocation(float x, float y, float z) {
 		((AudioImpl2) sound).setLocation(x, y, z);
 	}
 }

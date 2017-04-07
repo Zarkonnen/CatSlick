@@ -47,6 +47,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 	int musicThreeStrikes = 3;
 	final ArrayList<File> additionalLoadBases = new ArrayList<File>();
 	final ArrayList<File> additionalSoundLoadBases = new ArrayList<File>();
+	float soundZ = 0.5f;
 	
 	byte[] emergencyMemoryStash = null;
 	
@@ -139,7 +140,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		agc.destroy();
 	}
 	
-	public static class MyLoop implements Loop {
+	public class MyLoop implements Loop {
 		private final Sound2 s;
 
 		public MyLoop(Sound2 s) {
@@ -153,7 +154,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 
 		@Override
 		public void setLocation(float x, float y) {
-			s.setLocation(x, y, 0);
+			s.setLocation(x, y, soundZ);
 		}
 
 		@Override
@@ -323,6 +324,10 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 				}
 			}
 		}
+		
+		public void setSoundZ(float sz) {
+			soundZ = sz;
+		}
 
 		@Override
 		public void play(String sound, double pitch, double volume, double x, double y) {
@@ -330,7 +335,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 			synchronized (soundLoadMutex) {
 				Sound2 s = getSound(sound);
 				if (s != null) {
-					s.playAt((float) pitch, (float) volume, (float) x, (float) y, 0);
+					s.playAt((float) pitch, (float) volume, (float) x, (float) y, soundZ);
 				}
 			}
 		}
@@ -344,7 +349,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 			}
 			if (s != null) {
 				s = new Sound2(s);
-				s.loopAt((float) pitch, (float) volume, (float) x, (float) y, 0);
+				s.loopAt((float) pitch, (float) volume, (float) x, (float) y, soundZ);
 				return new MyLoop(s);
 			}
 			return null;

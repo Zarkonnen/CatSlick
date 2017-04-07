@@ -163,7 +163,7 @@ public class AudioImpl2 implements Audio {
 		AL10.alSourcef(store.getSource(index), AL10.AL_PITCH, pitch);
 	}
 
-	public void setLocation(float x, float y, int z) {
+	public void setLocation(float x, float y, float z) {
 		if (index == -1) { return; }
 		AL10.alSource3f(store.getSource(index), AL10.AL_POSITION, x, y, z);
 	}

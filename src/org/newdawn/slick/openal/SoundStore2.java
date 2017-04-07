@@ -350,7 +350,7 @@ public class SoundStore2 {
 				FloatBuffer listenerVel = BufferUtils.createFloatBuffer(3).put(
 						new float[] { 0.0f, 0.0f, 0.0f });
 				FloatBuffer listenerPos = BufferUtils.createFloatBuffer(3).put(
-						new float[] { 0.0f, 0.0f, -0.5f });
+						new float[] { 0.0f, 0.0f, 0.0f });
 				listenerPos.flip();
 				listenerVel.flip();
 				listenerOri.flip();
