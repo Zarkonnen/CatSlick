@@ -343,12 +343,16 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		@Override
 		public Loop loop(String sound, double pitch, double volume, double x, double y) {
 			if (volume < 0.01) { return null; }
-			Sound2 s = null;
+			Sound2 s;
 			synchronized (soundLoadMutex) {
 				s = getSound(sound);
 			}
 			if (s != null) {
-				s = new Sound2(s);
+				try {
+					s = new Sound2(s);
+				} catch (Exception e) {
+					return null;
+				}
 				s.loopAt((float) pitch, (float) volume, (float) x, (float) y, soundZ);
 				return new MyLoop(s);
 			}
@@ -358,7 +362,12 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		private Sound2 getSound(String sound) {
 			synchronized (soundLoadMutex) {
 				if (!sound.contains(".")) { sound += ".ogg"; }
-				Sound2 snd = sounds.get(sound);
+				Sound2 snd = null;
+				try {
+					snd = sounds.get(sound);
+				} catch (Throwable e) {
+					// Ignore
+				}
 				if (snd != null) {
 					return snd;
 				}
