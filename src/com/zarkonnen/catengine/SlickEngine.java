@@ -44,7 +44,6 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 	ExceptionHandler eh = this;
 	int mouseWheelMovement = 0;
 	char lastChar = 0;
-	int musicThreeStrikes = 3;
 	final ArrayList<File> additionalLoadBases = new ArrayList<File>();
 	final ArrayList<File> additionalSoundLoadBases = new ArrayList<File>();
 	float soundZ = 0.5f;
@@ -403,17 +402,10 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		
 		@Override
 		public void preloadMusic(String music) {
-			try {
-				getMusic(music);
-			} catch (Exception e) {
-				throw new RuntimeException("Unable to load music " + music, e);
-			}
+			getMusic(music);
 		}
 		
-		private Music2 getMusic(String music) throws SlickException {
-			if (musicThreeStrikes <= 0) {
-				return null;
-			}
+		private Music2 getMusic(String music) {
 			synchronized (soundLoadMutex) {
 				if (!music.contains(".")) { music += ".ogg"; }
 				if (musics.containsKey(music)) {
@@ -445,6 +437,8 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 				} catch (OutOfMemoryError oom) {
 					emergencyMemoryStash = null;
 					Runtime.getRuntime().gc();
+					return null;
+				} catch (Exception e) {
 					return null;
 				}
 			}
