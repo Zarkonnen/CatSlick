@@ -76,6 +76,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 
 	@Override
 	public void update(GameContainer gc, int delta) throws SlickException {
+		//System.out.println("upd");
 		if (emergencyMemoryStash == null) {
 			emergencyMemoryStash = new byte[8 * 1024 * 1024]; // Allocate 8 MB to ditch in a hurry if needed.
 		}
@@ -90,6 +91,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 
 	@Override
 	public void render(GameContainer gc, Graphics grphcs) throws SlickException {
+		//System.out.println("ren");
 		g.render(new MyFrame(gc, grphcs));
 	}
 	
@@ -104,23 +106,43 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		}	
 	}
 	
+	public void setRunInBackground(boolean runInBackground) {
+		agc.setUpdateOnlyWhenVisible(runInBackground);
+		agc.setAlwaysRender(runInBackground);
+	}
+	
 	class MyAppGameContainer extends AppGameContainer {
 		public MyAppGameContainer(org.newdawn.slick.Game game) throws SlickException {
 			super(game, 800, 600, false);
-			setup();
-			getDelta();
+			//setup();
+			//getDelta();
 		}
 
 		public void runUntil(Condition c) throws SlickException {
-			getDelta();
+			/*getDelta();
 			while (!c.satisfied() && running()) {
 				gameLoop();
 			}
 
 			if (doExit) {
 				System.exit(0);
-			}
+			}*/
+			start();
 		}
+		
+		/*@Override
+		protected void gameLoop() throws SlickException {
+			System.out.println("gl");
+			super.gameLoop();
+		}
+		
+		@Override
+		protected void updateAndRender(int delta) throws SlickException {
+			System.out.println("uar");
+			System.out.println("hasFocus " + hasFocus());
+			System.out.println("alwaysRender " + getAlwaysRender());
+			super.updateAndRender(delta);
+		}*/
 	}
 
 	@Override
