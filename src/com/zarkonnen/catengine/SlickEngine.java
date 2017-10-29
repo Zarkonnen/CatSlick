@@ -544,6 +544,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 			this.g = grphcs;
 			gcW = gc.getWidth();
 			gcH = gc.getHeight();
+			sm = new ScreenMode(gc.getWidth(), gc.getHeight(), fullscreen);
 		}
 		
 		boolean colorNotWhite;
@@ -551,6 +552,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		final int gcH;
 		final GameContainer gc;
 		final Graphics g;
+		final ScreenMode sm;
 		
 		@Override
 		public Object nativeRenderer() {
@@ -564,7 +566,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		
 		@Override
 		public ScreenMode mode() {
-			return new ScreenMode(gc.getWidth(), gc.getHeight(), fullscreen);
+			return sm;
 		}
 
 		@Override
