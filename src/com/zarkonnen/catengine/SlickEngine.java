@@ -192,10 +192,12 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 	public class MyInput implements com.zarkonnen.catengine.Input {
 		GameContainer gc;
 		int delta;
+		Pt cursor;
 		
 		public MyInput(GameContainer gc, int delta) {
 			this.gc = gc;
 			this.delta = delta;
+			cursor = new Pt(gc.getInput().getMouseX(), gc.getInput().getMouseY());
 		}
 		
 		public void addLoadBase(File f) {
@@ -243,7 +245,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 
 		@Override
 		public Pt cursor() {
-			return new Pt(gc.getInput().getMouseX(), gc.getInput().getMouseY());
+			return cursor;
 		}
 
 		@Override
