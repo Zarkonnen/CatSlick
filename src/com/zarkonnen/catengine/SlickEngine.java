@@ -52,6 +52,18 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 	
 	Pt lastClick; int clickButton;
 	
+		public static interface ReportHandler {
+		public void report(String s, Throwable t);
+	}
+	
+	public ReportHandler reportHandler = new ReportHandler() {
+		@Override
+		public void report(String s, Throwable t) {
+			System.err.println(s);
+			t.printStackTrace();
+		}
+	};
+	
 	@Override
 	public void mouseWheelMoved(int i) {
 		mouseWheelMovement += i;
@@ -743,6 +755,9 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 				try {
 					fis = new FileInputStream(f);
 					return new Image(fis, f.getAbsolutePath(), false);
+				} catch (OutOfMemoryError oom) {
+					emergencyMemoryStash = null;
+					reportHandler.report("OOM while loading " + name + " from " + f.getName(), oom);
 				} catch (Exception e2) {}
 				finally { try { fis.close(); } catch (Exception e2) {} }
 			}
@@ -754,6 +769,10 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 			} else {
 				return null;
 			}
+		} catch (OutOfMemoryError oom) {
+			emergencyMemoryStash = null;
+			reportHandler.report("OOM while internally loading " + name + " from " + loadBase + name, oom);
+			return null;
 		} catch (Exception e) {
 			eh.handle(e, false);
 			return null;
