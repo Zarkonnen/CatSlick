@@ -47,12 +47,13 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 	final ArrayList<File> additionalLoadBases = new ArrayList<File>();
 	final ArrayList<File> additionalSoundLoadBases = new ArrayList<File>();
 	float soundZ = 0.5f;
+	boolean isMac = System.getProperty("os.name").contains("Mac");
 	
 	byte[] emergencyMemoryStash = null;
 	
 	Pt lastClick; int clickButton;
 	
-		public static interface ReportHandler {
+	public static interface ReportHandler {
 		public void report(String s, Throwable t);
 	}
 	
@@ -282,6 +283,9 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		
 		@Override
 		public Pt clicked() {
+			if (isMac) {
+				return lastClick != null && cursor != null ? cursor : null;
+			}
 			return lastClick;
 		}
 
