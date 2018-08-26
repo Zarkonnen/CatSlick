@@ -113,7 +113,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		this.g = g;
 		try {
 			agc = new MyAppGameContainer(this);
-			agc.setDisplayMode(800, 600, false);
+			agc.setDisplayMode(1920, 1200, false);
 		} catch (Exception e) {
 			eh.handle(e, true);
 		}	
