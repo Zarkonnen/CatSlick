@@ -35,6 +35,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 	MyAppGameContainer agc;
 	Game g;
 	boolean fullscreen;
+	boolean fullscreenWindow;
 	boolean cursorVisible = true;
 	String lastKeyPressed;
 	final HashMap<String, SoftReference<Image>> images = new HashMap<String, SoftReference<Image>>();
@@ -296,7 +297,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 
 		@Override
 		public ScreenMode mode() {
-			return new ScreenMode(gc.getWidth(), gc.getHeight(), fullscreen);
+			return new ScreenMode(gc.getWidth(), gc.getHeight(), fullscreen, fullscreenWindow);
 		}
 		
 		@Override
@@ -309,6 +310,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 				gc.setMouseGrabbed(false);
 				agc.setDisplayMode(mode.width, mode.height, mode.fullscreen);
 				fullscreen = mode.fullscreen;
+				fullscreenWindow = mode.fullscreenWindow;
 				setCursorVisible(cursorVisible);
 				System.setProperty("org.lwjgl.opengl.Window.undecorated", mode.fullscreenWindow ? "true" : "false");
 			} catch (Exception e) {
@@ -562,7 +564,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 			this.g = grphcs;
 			gcW = gc.getWidth();
 			gcH = gc.getHeight();
-			sm = new ScreenMode(gc.getWidth(), gc.getHeight(), fullscreen);
+			sm = new ScreenMode(gc.getWidth(), gc.getHeight(), fullscreen, fullscreenWindow);
 		}
 		
 		boolean colorNotWhite;
