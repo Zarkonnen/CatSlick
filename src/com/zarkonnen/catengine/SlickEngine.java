@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
@@ -446,7 +447,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		public void preloadMusic(String music) {
 			getMusic(music);
 		}
-		
+				
 		private Music2 getMusic(String music) {
 			synchronized (soundLoadMutex) {
 				if (!music.contains(".")) { music += ".ogg"; }
@@ -474,13 +475,16 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 								} finally { try { fis.close(); } catch (Exception e){} }
 							}
 						}
+						musics.put(music, null); // Record load as failed.
 						return null;
 					}
 				} catch (OutOfMemoryError oom) {
 					emergencyMemoryStash = null;
 					Runtime.getRuntime().gc();
+					musics.put(music, null); // Record load as failed.
 					return null;
 				} catch (Exception e) {
+					musics.put(music, null); // Record load as failed.
 					return null;
 				}
 			}
