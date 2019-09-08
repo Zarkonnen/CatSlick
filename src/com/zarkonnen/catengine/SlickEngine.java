@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
 import org.newdawn.slick.*;
@@ -50,6 +51,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 	final ArrayList<File> additionalSoundLoadBases = new ArrayList<File>();
 	float soundZ = 0.5f;
 	boolean isMac = System.getProperty("os.name").contains("Mac");
+	StringBuilder typedText = new StringBuilder();
 	
 	byte[] emergencyMemoryStash = null;
 	
@@ -102,6 +104,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		mouseWheelMovement = 0;
 		lastClick = null;
 		clickButton = 0;
+		typedText.delete(0, typedText.length());
 	}
 
 	@Override
@@ -560,6 +563,10 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		public char lastInput() {
 			return lastChar;
 		}
+		
+		public String typedText() {
+			return typedText.toString();
+		}
 	}
 
 	private class MyFrame implements Frame {
@@ -795,6 +802,9 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 	public void keyPressed(int i, char c) {
 		lastKeyPressed = org.newdawn.slick.Input.getKeyName(i);
 		lastChar = c;
+		if (c != 0) {
+			typedText.append(c);
+		}
 	}
 
 	@Override
@@ -802,6 +812,10 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		String k = org.newdawn.slick.Input.getKeyName(i);
 		if (k.equals(lastKeyPressed)) {
 			lastKeyPressed = null;
+		}
+		char releaseChar = Keyboard.getEventCharacter();
+		if (releaseChar != 0 && releaseChar != lastChar) {
+			typedText.append(releaseChar);
 		}
 		if (c == lastChar) {
 			lastChar = 0;
