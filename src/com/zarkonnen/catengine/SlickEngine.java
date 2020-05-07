@@ -801,9 +801,11 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 	@Override
 	public void keyPressed(int i, char c) {
 		lastKeyPressed = org.newdawn.slick.Input.getKeyName(i);
-		lastChar = c;
-		if (c != 0) {
-			typedText.append(c);
+		if (!isMac) {
+			lastChar = c;
+			if (c != 0) {
+				typedText.append(c);
+			}
 		}
 	}
 

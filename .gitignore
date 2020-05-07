@@ -1,6 +1,7 @@
 build.xml
 lib/CopyLibs
 lib/nblibraries.properties
+lib/CatEngine.jar
 nbproject
 build
 dist
