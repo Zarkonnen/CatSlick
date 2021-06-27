@@ -759,8 +759,23 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		img.machineWCache = image.getWidth();
 		img.machineHCache = image.getHeight();
 	}
-
+	
+	public static final long NOT_ENOUGH_MEMORY = 128 * 1024 * 1024;
+	
 	private Image loadImage(String name) {
+		boolean alreadyLowOnMemory = Runtime.getRuntime().freeMemory() < NOT_ENOUGH_MEMORY;
+		Image img = loadImage2(name);
+		if (!alreadyLowOnMemory && Runtime.getRuntime().freeMemory() < NOT_ENOUGH_MEMORY) {
+			System.gc();
+			if (Runtime.getRuntime().freeMemory() < NOT_ENOUGH_MEMORY) {
+				try { Thread.sleep(100); } catch (Exception e) {}
+				System.gc();
+			}
+		}
+		return img;
+	}
+
+	private Image loadImage2(String name) {
 		if (!name.contains(".")) {
 			name = name + ".png";
 		}
