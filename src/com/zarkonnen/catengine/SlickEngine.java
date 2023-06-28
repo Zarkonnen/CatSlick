@@ -211,6 +211,8 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		GameContainer gc;
 		int delta;
 		Pt cursor;
+		HashMap<String, Boolean> downKeys = new HashMap<String, Boolean>();
+		HashMap<String, Boolean> pressedKeys = new HashMap<String, Boolean>();
 		
 		public MyInput(GameContainer gc, int delta) {
 			this.gc = gc;
@@ -240,21 +242,27 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 
 		@Override
 		public boolean keyDown(String key) {
-			try {
-				return gc.getInput().isKeyDown(org.newdawn.slick.Input.class.getField("KEY_" + key).getInt(null));
-			} catch (Exception e) {
-				return false;
+			if (!downKeys.containsKey(key)) {
+				try {
+					downKeys.put(key, gc.getInput().isKeyDown(org.newdawn.slick.Input.class.getField("KEY_" + key).getInt(null)));
+				} catch (Exception e) {
+					downKeys.put(key, false);
+				}
 			}
+			return downKeys.get(key);
 		}
 		
 		
 		@Override
 		public boolean keyPressed(String key) {
-			try {
-				return gc.getInput().isKeyPressed(org.newdawn.slick.Input.class.getField("KEY_" + key).getInt(null));
-			} catch (Exception e) {
-				return false;
+			if (!pressedKeys.containsKey(key)) {
+				try {
+					pressedKeys.put(key, gc.getInput().isKeyPressed(org.newdawn.slick.Input.class.getField("KEY_" + key).getInt(null)));
+				} catch (Exception e) {
+					return pressedKeys.put(key, false);
+				}
 			}
+			return pressedKeys.get(key);
 		}
 		
 		public char getTypedChar() {
@@ -762,7 +770,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 	
 	public static final long NOT_ENOUGH_MEMORY = 128 * 1024 * 1024;
 	
-	private Image loadImage(String name) {
+	/*private Image loadImage(String name) {
 		boolean alreadyLowOnMemory = Runtime.getRuntime().freeMemory() < NOT_ENOUGH_MEMORY;
 		Image img = loadImage2(name);
 		if (!alreadyLowOnMemory && Runtime.getRuntime().freeMemory() < NOT_ENOUGH_MEMORY) {
@@ -773,9 +781,9 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 			}
 		}
 		return img;
-	}
+	}*/
 
-	private Image loadImage2(String name) {
+	private Image loadImage(String name) {
 		if (!name.contains(".")) {
 			name = name + ".png";
 		}
