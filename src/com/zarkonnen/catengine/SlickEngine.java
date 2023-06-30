@@ -242,6 +242,7 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 
 		@Override
 		public boolean keyDown(String key) {
+			if (key == null) { return false; }
 			if (!downKeys.containsKey(key)) {
 				try {
 					downKeys.put(key, gc.getInput().isKeyDown(org.newdawn.slick.Input.class.getField("KEY_" + key).getInt(null)));
@@ -255,11 +256,12 @@ public class SlickEngine extends BasicGame implements Engine, KeyListener, Excep
 		
 		@Override
 		public boolean keyPressed(String key) {
+			if (key == null) { return false; }
 			if (!pressedKeys.containsKey(key)) {
 				try {
 					pressedKeys.put(key, gc.getInput().isKeyPressed(org.newdawn.slick.Input.class.getField("KEY_" + key).getInt(null)));
 				} catch (Exception e) {
-					return pressedKeys.put(key, false);
+					pressedKeys.put(key, false);
 				}
 			}
 			return pressedKeys.get(key);
